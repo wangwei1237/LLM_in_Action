@@ -52,6 +52,13 @@ book:
       - text: "博客"
         icon: "house-fill"
         href: "https://wangwei1237.github.io/"
+      - text: "书籍"
+        icon: "bookshelf"
+        menu: 
+          - text: "动手学深度学习"
+            href: "https://zh.d2l.ai/"
+          - text: "Learn Prompting"
+            href: "https://learnprompting.org/zh-Hans/docs/intro"
       - text: "关于"
         icon: "person-badge-fill"
         href: "https://wangwei1237.github.io/aboutme/"
