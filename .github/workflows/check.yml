@@ -22,6 +22,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           quarto add --no-prompt quarto-ext/include-code-files
+          quarto install --no-prompt tinytex
       - name: Render and Publish
         run: | 
           quarto render
