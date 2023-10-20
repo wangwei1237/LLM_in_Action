@@ -28,4 +28,34 @@ jobs:
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
       - name: Checkout main source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+      - name: Install Quarto Extensions
+        working-directory: ${{ github.workspace }}
+        run: |
+          quarto add --no-prompt quarto-ext/include-code-files
+          quarto install --no-prompt tinytex
+      - name: Render and Publish
+        run: | 
+          quarto render
+      - name: package the book
+        working-directory: ${{ github.workspace }}
+        run: |
+          mv public LLM_in_Action && tar czvf LLM_in_Action.tar.gz LLM_in_Action/*
+          ls .
+      - name: Upload Release Asset
+        working-directory: ${{ github.workspace }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.get-upload-url.outputs.upload-url }}
+          asset_path: LLM_in_Action.tar.gz
+          asset_name: LLM_in_Action.tar.gz
+          asset_content_type: application/octet-stream
+      - name: trigger the wangwei1237.github.io_src deploy
+        run: | 
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.TOKEN }}" \
+          https://api.github.com/repos/wangwei1237/wangwei1237.github.io_src/dispatches \
+          -d '{"event_type":"update", "client_payload":{"from": "${{ github.repository }}", "msg": "${{ github.event.head_commit.message }}"}}'

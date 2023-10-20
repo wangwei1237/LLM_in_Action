@@ -50,15 +50,3 @@ csl: acm-sig-proceedings.csl
 format:
   html:
     theme: materia
-  pdf:
-    documentclass: scrbook
-    cite-method: biblatex
-    include-in-header: 
-      text: |
-        \usepackage{makeidx}
-        \usepackage{ctex}
-        \usepackage{amsthm,mathrsfs}
-        \makeindex
-    include-after-body: 
-      text: |
-        \printindex
