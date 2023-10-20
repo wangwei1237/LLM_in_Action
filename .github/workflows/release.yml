@@ -42,12 +42,14 @@ jobs:
         run: |
           mv public LLM_in_Action && tar czvf LLM_in_Action.tar.gz LLM_in_Action/*
           ls .
-      - uses: actions/upload-release-asset@v1
+      - name: Upload Release Asset
+        working-directory: ${{ github.workspace }}
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get-upload-url.outputs.upload-url }}
-          asset_path: LLM_in_Action.tar.gz
+          asset_path: ./LLM_in_Action.tar.gz
           asset_name: LLM_in_Action.tar.gz
           asset_content_type: application/octet-stream
       - name: trigger the wangwei1237.github.io_src deploy
