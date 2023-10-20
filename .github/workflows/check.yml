@@ -17,10 +17,6 @@ jobs:
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
       - name: Install Python and Dependencies
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          cache: 'pip'
       - name: Checkout main source
         uses: actions/checkout@v2
       - name: Install Quarto Extensions
