@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create Release
-        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
@@ -24,8 +23,8 @@ jobs:
           release_name: Release ${{ github.event.inputs.version }}
           draft: false
           prerelease: false
-        - run: sudo sh ./getuploadurl.sh ${{ github.event.inputs.version }} ${{ secrets.GITHUB_TOKEN }} | xargs -I {} echo "upload-url={}" >> $GITHUB_OUTPUT
-          id: upload-url
+      - run: sudo sh ./getuploadurl.sh ${{ github.event.inputs.version }} ${{ secrets.GITHUB_TOKEN }} | xargs -I {} echo "upload-url={}" >> $GITHUB_OUTPUT
+        id: upload-url
     outputs:
       upload-url: ${{ steps.upload-url.outputs.upload-url }} 
   
