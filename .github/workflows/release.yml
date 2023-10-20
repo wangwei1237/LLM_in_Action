@@ -14,16 +14,8 @@ jobs:
   get-upload-url:
     runs-on: ubuntu-latest
     steps:
-      - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-        with:
-          tag_name: ${{ github.event.inputs.version }}
-          release_name: Release ${{ github.event.inputs.version }}
-          draft: false
-          prerelease: false
-      - run: sudo sh ./getuploadurl.sh ${{ github.event.inputs.version }} ${{ secrets.GITHUB_TOKEN }} | xargs -I {} echo "upload-url={}" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
+      - run: sudo bash ./getuploadurl.sh ${{ github.event.inputs.version }} ${{ secrets.GITHUB_TOKEN }} | xargs -I {} echo "upload-url={}" >> $GITHUB_OUTPUT
         id: upload-url
     outputs:
       upload-url: ${{ steps.upload-url.outputs.upload-url }} 
@@ -37,16 +29,3 @@ jobs:
         uses: quarto-dev/quarto-actions/setup@v2
       - name: Checkout main source
         uses: actions/checkout@v2
-      - name: Install Quarto Extensions
-        working-directory: ${{ github.workspace }}
-        run: |
-          quarto add --no-prompt quarto-ext/include-code-files
-          quarto install --no-prompt tinytex
-      - name: Render and Publish
-        run: | 
-          quarto render
-      - name: package the book
-        working-directory: ${{ github.workspace }}
-        run: |
-          mv public LLM_in_Action && tar czvf LLM_in_Action.tar.gz LLM_in_Action/*
-          ls .

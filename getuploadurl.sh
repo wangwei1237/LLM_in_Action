@@ -2,7 +2,7 @@
 
 set -ex
 
-if [ $# -ne 3 ]
+if [ $# -ne 2 ]
 then
     echo "::error the parameters error, please check!!!"
     exit 1
