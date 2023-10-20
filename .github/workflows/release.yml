@@ -42,9 +42,7 @@ jobs:
         run: |
           mv public LLM_in_Action && tar czvf LLM_in_Action.tar.gz LLM_in_Action/*
           ls .
-      - name: Upload Release Asset
-        working-directory: ${{ github.workspace }}
-        uses: actions/upload-release-asset@v1
+      - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
