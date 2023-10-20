@@ -1,0 +1,326 @@
+# LangChain 函数调用
+
+::: {.callout-tip title="要点提示"} 
+* OpenAI LLMs 中的 `函数调用（Function Calling）` 使得开发者可以对函数进行描述，而 `模型` 则可以用这些函数描述来生成函数调用参数，并与外部工具和 APIs 建立更为可靠、结构化的连接。[^1]
+* 开发者可以使用 `JSON Schema` 定义函数，指导 `模型` 如何根据用户的输入信息来生成调用 `函数` 所需的参数，并调用函数。
+* `函数调用` 会有非富多样的应用场景，例如：
+  * 构建与外部工具或 APIs 交互的聊天机器人
+  * 把自然语言查询转换为 API 调用，以便和现有的 `服务` 和 `数据库` 无缝整合
+  * 从非结构化的文本中提取结构化数据
+* `函数调用` 会涉及到如下的步骤：
+  * 调用包含 `函数` 的 `模型`
+  * 处理 `函数` 响应
+  * 将 `函数` 响应返回给 `模型`，以进行进一步的处理货这生成更友好的用户响应 
+:::
+
+## 大模型的时效性
+当我们问大模型“明天天气怎么样”时，因为大模型训练语料的时效性问题，如果不依赖外部信息，大模型是很难回答这种问题的，如 @fig-weather 所示。
+
+::: {#fig-weather layout-ncol=2}
+
+![ChatGPT](images/weather_gpt.jpg){#fig-weather_gpt}
+
+![文心一言](images/weather_ernie.jpg){#fig-weather_ernie}
+
+明天天气怎么样？
+:::
+
+而 OpenAI 大语言模型提供的 `函数调用` 能力，恰恰非常完美的解决了类似的问题，从而使得大语言模型可以通过 `函数调用` 与外部系统通信，并获取更实时的信息，以解决类似的问题。
+
+## 函数调用流程
+OpenAI 开发的大语言模型（例如GPT-3.5-turbo-0613，GPT-4-0613）提供了一种名为 `Function Calling(函数调用)` 的创新功能。`函数调用` 使得开发人员能够在模型中对函数进行描述，然后模型可以利用这些描述来巧妙地为函数生成调用参数。
+
+在 OpenAI 中，函数调用的步骤可以参考：@fig-function_calling_step
+
+![OpenAI 的函数调用流程](images/function_calling_1.png){#fig-function_calling_step}
+
+::: {.callout-caution title="注意"}
+需要特别注意的是，大语言模型本身并不会调用我们预定的 `函数`，大语言模型仅仅是生成我们所要调用的函数的调用参数而言，具体调用函数的动作，需要我们在自己的应用代码中来实现。[^2]
+:::
+
+::: {.callout-important title="思考"}
+为什么模型不能直接调用函数？
+:::
+
+利用 `函数调用`，LLMs 可以很方便的将自然语言指令转变为相关的函数调用，例如：可以把“给张三发一封邮件询问下他下周五下午是否需要一杯咖啡” 这样的提示转换为 `send_email(to: string, body: string)` 函数调用。
+
+## 示例
+### OpenAI API
+
+```{#lst-fc_openai .python lst-cap="使用 OpenAI API 进行函数调用示例"}
+import openai
+import json
+
+# Example dummy function hard coded to return the same weather
+# In production, this could be your backend API or an external API
+def get_current_weather(location, unit="celsius"):
+    """Get the current weather in a given location"""
+    weather_info = {
+        "location": location,
+        "temperature": "27",
+        "unit": unit,
+        "forecast": ["sunny", "windy"],
+    }
+    return json.dumps(weather_info)
+
+def run_conversation():
+    # Step 1: send the conversation and available functions to GPT
+    messages = [{"role": "user", "content": "北京明天天气怎么样?"}]
+    functions = [
+        {
+            "name": "get_current_weather",
+            "description": "Get the current weather in a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city and state, e.g. San Francisco, CA",
+                    },
+                    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+                },
+                "required": ["location"],
+            },
+        }
+    ]
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo-0613",
+        messages=messages,
+        functions=functions,
+        function_call="auto",  # auto is default, but we'll be explicit
+    )
+
+    print("---------step 1. the 1st LLMs response-----------")
+    print(response)
+
+    response_message = response["choices"][0]["message"]
+
+    # Step 2: check if GPT wanted to call a function
+    if response_message.get("function_call"):
+        # Step 3: call the function
+        # Note: the JSON response may not always be valid; be sure to handle errors
+        available_functions = {
+            "get_current_weather": get_current_weather,
+        }  # only one function in this example, but you can have multiple
+        function_name = response_message["function_call"]["name"]
+        fuction_to_call = available_functions[function_name]
+        function_args = json.loads(response_message["function_call"]["arguments"])
+        function_response = fuction_to_call(
+            location=function_args.get("location"),
+            #unit=function_args.get("unit"),
+        )
+
+        print("---------step 2. function response-----------")
+        print(function_response)
+
+        # Step 4: send the info on the function call and function response to GPT
+        messages.append(response_message)  # extend conversation with assistant's reply
+        messages.append(
+            {
+                "role": "function",
+                "name": function_name,
+                "content": function_response,
+            }
+        )  # extend conversation with function response
+
+        print("---------step 3. final messages-----------")
+        print(messages)
+
+        second_response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-0613",
+            messages=messages,
+        )  # get a new response from GPT where it can see the function response
+        return second_response
+
+res = run_conversation()
+print("---------step 4. final LLMs response-----------")
+print(res)
+```
+
+@lst-fc_openai 的运行结果如 @lst-openai_fc_res：
+
+```{#lst-openai_fc_res .javascript lst-cap="运行结果"}
+---------step 1. the 1st LLMs response-----------
+{
+  "id": "chatcmpl-7xnsEW2rSsec7Qd1FC60cKIT7TtuR",
+  "object": "chat.completion",
+  "created": 1694487422,
+  "model": "gpt-3.5-turbo-0613",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "function_call": {
+          "name": "get_current_weather",
+          "arguments": "{\n  \"location\": \"北京\"\n}"
+        }
+      },
+      "finish_reason": "function_call"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 85,
+    "completion_tokens": 16,
+    "total_tokens": 101
+  }
+}
+---------step 2. function response-----------
+{"location": "北京", "temperature": "27", "unit": null, "forecast": ["sunny", "windy"]}
+---------step 3. final messages-----------
+[{'role': 'user', 'content': '北京明天天气怎么样?'}, <OpenAIObject at 0x1082907c0> JSON: {
+  "role": "assistant",
+  "content": null,
+  "function_call": {
+    "name": "get_current_weather",
+    "arguments": "{\n  \"location\": \"北京\"\n}"
+  }
+}, {'role': 'function', 'name': 'get_current_weather', 'content': '{"location": "\\u5317\\u4eac", "temperature": "27", "unit": null, "forecast": ["sunny", "windy"]}'}]
+---------step 4. final LLMs response-----------
+{
+  "id": "chatcmpl-7xnsFw2dssMs3R0aGVMmjB0cjLugZ",
+  "object": "chat.completion",
+  "created": 1694487423,
+  "model": "gpt-3.5-turbo-0613",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "北京明天的天气预报是晴天，有很大的风。气温为27°C。"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 77,
+    "completion_tokens": 30,
+    "total_tokens": 107
+  }
+}
+```
+
+### LangChain 中调用 OpenAI Functions
+
+可以参考 LangChain 官方文档以在 LangChain 中使用 OpenAI `函数调用` 的能力。[^3]
+
+```{#lst-fc_langchain .python lst-cap="使用 LangChain 实现函数调用"}
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.chains.openai_functions import (
+    create_openai_fn_chain,
+)
+from langchain.chains import LLMChain
+import json
+
+def get_current_weather(location: str, unit: str="celsius") -> str:
+    """Get the current weather in a given location
+
+    Args:
+        location (str): location of the weather.
+        unit (str): unit of the tempuature.
+    
+    Returns:
+        str: weather in the given location.
+    """
+
+    weather_info = {
+        "location": location,
+        "temperature": "27",
+        "unit": unit,
+        "forecast": ["sunny", "windy"],
+    }
+    return json.dumps(weather_info)
+
+llm = ChatOpenAI(model="gpt-3.5-turbo-0613")
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("human", "{query}"),
+    ]
+)
+
+chain = create_openai_fn_chain([get_current_weather], llm, prompt, verbose=True)
+res = chain.run("What's the weather like in Beijing tomorrow?")
+print("-------------The 1-st langchain result-------------")
+print(res)
+
+res_func = get_current_weather(res['location'])
+
+chain = LLMChain(llm=llm, prompt=prompt, verbose=True)
+res = chain.run("extract the tomorrow weather infomation from ：%s， and answer the question: %s" % (res_func, "What's the weather like in Beijing tomorrow?"))
+print(res)
+```
+
+@lst-fc_langchain 的运行结果如下所示：
+
+```{#lst-fc_langchain_res .javascript lst-cap="运行结果"}
+> Entering new LLMChain chain...
+Prompt after formatting:
+Human: What's the weather like in Beijing tomorrow?
+
+> Finished chain.
+-------------The 1-st langchain result-------------
+{'location': 'Beijing', 'unit': 'metric'}
+
+> Entering new LLMChain chain...
+Prompt after formatting:
+Human: extract the tomorrow weather infomation from ：{"location": "Beijing", "temperature": "27", "unit": "celsius", "forecast": ["sunny", "windy"]}， and answer the question: What's the weather like in Beijing tomorrow?
+
+> Finished chain.
+The weather in Beijing tomorrow is sunny and windy.
+```
+
+::: {.callout-note}
+在 `create_openai_fn_chain` 中，其第一个参数是一个函数列表，如果该列表只有 1 个函数时，则 `create_openai_fn_chain` 仅会返回大语言模型构造的调用该函数对应的参数。例如如上的例子，`create_openai_fn_chain` 仅返回了 `{'location': 'Beijing', 'unit': 'metric'}`。
+而如果函数列表存在多个函数时，则会返回大语言模型分析之后所需要调用的函数名以及对应的参数，例如： `{'name': 'get_current_weather', 'arguments': {'location': 'Beijing'}}`。
+::: 
+
+```{#lst-fc_multi_fcs .python lst-cap="create_openai_fn_chain() 传递多个函数调用示例"}
+# ...
+def get_current_news(location: str) -> str:
+    """Get the current news based on the location.'
+
+    Args:
+        location (str): The location to query.
+    
+    Returs:
+        str: Current news based on the location.
+    """
+
+    news_info = {
+        "location": location,
+        "news": [
+            "I have a Book.",
+            "It's a nice day, today."
+        ]
+    }
+
+    return json.dumps(news_info)
+# ...
+
+chain = create_openai_fn_chain([get_current_weather, get_current_news], llm, prompt, verbose=True)
+res = chain.run("What's the weather like in Beijing tomorrow?")
+print("-------------The 1-st langchain result-------------")
+print(res)
+```
+
+@lst-fc_multi_fcs 的运行结果如 @lst-fc_multi_res 所示：
+
+```{#lst-fc_multi_res .javascript lst-cap="运行结果"}
+> Entering new LLMChain chain...
+Prompt after formatting:
+Human: What's the weather like in Beijing tomorrow?
+
+> Finished chain.
+-------------The 1-st langchain result-------------
+{'name': 'get_current_weather', 'arguments': {'location': 'Beijing'}}
+```
+
+## 参考文献
+[^1]: [Function calling and other API updates](https://openai.com/blog/function-calling-and-other-api-updates)
+
+[^2]: [Guides: Function calling](https://platform.openai.com/docs/guides/gpt/function-calling)
+
+[^3]: [Using OpenAI functions](https://python.langchain.com/docs/modules/chains/how_to/openai_functions)
+

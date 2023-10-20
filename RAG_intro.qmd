@@ -1,0 +1,63 @@
+# Retrieval Augmented Generation {#sec-RAG}
+:::{.callout-tip}
+Retrieval Augment Generation: A LLM that uses an external datastore at test time（not at pre-training time）.
+
+> 在运行时（而非预训练时），使用外部数据的大语言模型称之为基于检索增强的生成式。
+:::
+
+## RAG 基本概念
+根据 *A Survey on Retrieval-Augmented Text Generation* [@RATGSurvey] 所述：RAG 是深度学习和传统检索技术（Retrieval Technology）的有机结合，在生成式大模型时代，有着以下优势：
+
+* 知识库和模型分离，知识不以参数的形式存储在模型中，而是明文存储在数据库中，灵活性更高；
+* 文本生成转变为文本总结，生成结果的可信度更高，同时还降低了文本生成的难度；
+
+![RATG 综述研究概览](./images/RATG_overview.jpg){#fig-ratg_overview}
+
+根据 @fig-ratg_overview，RAG 范式有三个重要的组成部分：Retrieval Source，Retrieval Metric，Integration Method。
+
+### RAG 的表示方法
+传统的文本生成方法可以用如下公式表示：
+
+$$\boldsymbol{y}=f(\boldsymbol{x})$$ {#eq-RATG_1}
+
+其中，$\boldsymbol{x}$ 代表输入的文本（字符串序列），$f$ 表示模型，$\boldsymbol{y}$ 表示模型输出的文本。
+
+RAG 则可以用如下公式表示：
+
+$$\boldsymbol{y}=f(\boldsymbol{x}, \boldsymbol{z}), \boldsymbol{z} = \{(\boldsymbol{x}^\gamma, \boldsymbol{y}^\gamma)\}$$ {#eq-RATG_2}
+
+其中，$\boldsymbol{x}$ 代表输入的文本（字符串序列），$\boldsymbol{z}$ 代表知识库，$f$ 表示模型，$\boldsymbol{x}^\gamma$ 表示作为输入文本 $\boldsymbol{x}$ 的检索 *key*，$\boldsymbol{y}^\gamma$ 是与模型输出相关的知识。
+
+### Retrieval Source 类型
+* **Training Corpus**：有标注的训练数据直接作为外部知识。
+* **External Data**：支持提供训练数据之外的外部知识作为检索来源，比如于任务相关的领域数据，实现模型的快速适应。
+* **Unsupervised Data**：前两种知识源都需要一定的人工标注来完善“检索依据-输出”的对齐工作，无监督知识源可以直接支持无标注/对齐的知识作为检索来源。
+
+### Retrieval Metrics 类型
+* **Sparse-vector Retrieval**（浅层语义）：针对稀疏向量场景的度量方法，比如TF-IDF, BM25等。
+* **Dense-vector Retrieval**（深层语义）：针对稠密向量的度量方法，比如文本相似度。
+* **Task-specific Retrieval**：在通用的度量场景下，度量得分高并不能代表召回知识准确，因此有学者提出基于特定任务优化的召回度量方法，提高度量的准确率。
+
+### Integration Method 类型
+* **Data Augmentation**：直接拼接用户输入文本和知识文本，然后输入文本生成模型。
+* **Attention Mechanisms**：引入额外的Encoder，对用户输入文本和知识文本进行注意力编码后输入文本生成模型。
+* **Skeleton Extraction**：前两种方法都是通过文本向量化的隐式方法完成知识重点片段的抽取，Skeleton Extraction方法可以显式地完成类似工作。
+
+在 RAG 模式下，AI 应用发生了新的范式变化，从传统的 `Pre-training` + `Fine-tune` 的模式转换为了 `Pre-training` + `Prompt` 模式。这种模式的转变简化了对于不同任务而言模型训练的工作量，降低了 AI 的开发和使用门槛，同时也使得 `Retriveval` + `Generation` 成为可能。
+
+![RAG 基本架构](./images/RAG_arch.png){#fig-RAG_arch}
+
+## 为什么要使用 RAG
+仅依靠大模型已经可以完成很多任务，`Fine-tune` 也可以起到补充领域知识的作用，为什么 RAG 仍然如此重要呢？
+
+* **幻觉问题**：尽管大模型的参数量很大，但和人类的所有知识相比，仍然有非常大的差距。所以，大模型在生成内容时，很有可能会捏造事实，导致如 @sec-hallucination 所述的“幻觉”。因此，对于 LLMs 而言，通过搜索召回相关领域知识来作为特定领域的知识补充是非常必要的。
+
+* **语料更新时效性问题**：大模型的训练数据存在时间截止的问题。尽管可以通过 `Fine-tune` 来为大模型加入新的知识，但大模型的的训练成本和时间依然是需要面对的严峻难题：通常需要大量的计算资源，时间也难做到天级别更新。在 RAG 模式下，向量数据库和搜索引擎数据的更新都更加容易，这有助于业务数据的实时性。
+
+* **数据泄露问题**：尽管，可以利用 `Fine-tune` 的方式增强 LLM 在特定领域的处理能力。但是，用于 `Fine-tune` 的这些领域知识很可能包含个人或者公司的机密信息，且这些数据很可能通过模型而不经意间泄露出去[^1]。RAG 可以通过增加私有数据存储的方式使得用户的数据更加安全。
+
+## 更多内容
+更详细、深入的内容可以参考如下几篇文章：[-@RATGSurvey]，[-@AugmentedLM]。
+
+## 参考文献
+[^1]: [ChatGPT致三星半导体机密泄漏](https://zhuanlan.zhihu.com/p/619432239)

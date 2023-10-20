@@ -1,0 +1,104 @@
+# Milvus Beginner {#sec-milvus_install}
+
+## Milvus 安装
+### 1. 安装 docker-ce
+
+https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository。
+
+### 2. 安装 docker-composer
+
+```bash
+$ curl -L "https://github.com/docker/compose/releases/download/2.22.0/docker-compose-$(uname -s | tr 'A-Z' 'a-z')-$(uname -m)" -o /usr/local/bin/docker-compose
+
+$ sudo chmod +x /usr/local/bin/docker-compose
+
+$ docker-compose --version
+```
+
+### 3. 安装 docker-milvus 并启动
+
+```bash
+$ mkdir milvus && cd milvus 
+
+$ wget https://github.com/milvus-io/milvus/releases/download/v2.3.1/milvus-standalone-docker-compose.yml -O docker-compose.yml
+
+$ sudo docker compose up -d
+
+$ sudo docker compose ps
+
+```
+
+## Milvus 测试
+
+:::{.callout-warning}
+为了避免不同网络环境下的端口限制，可以使用 Nginx 的 TCP Proxy 功能代理 Milvus 默认的 `19530` 端口和 `9091` 端口。具体配置参见：@lst-milvus_port。
+
+```{#lst-milvus_port .bash lst-cap="Nginx 反向代理配置"}
+stream {
+    server {
+        listen 8081;
+        proxy_pass 127.0.0.1:19530;
+    }
+
+    server {
+        listen 8082;
+        proxy_pass 127.0.0.1:9091;
+    }
+}
+```
+:::
+
+### 安装 Milvus SDK
+
+```bash
+python3 -m pip install pymilvus
+```
+
+### 测试 Milvus
+
+```python
+from pymilvus import connections,db
+
+res = connections.connect(
+  host='127.0.0.1',
+  port='8081'
+)
+
+# database = db.create_database("test")
+res = db.list_database()
+print(res)
+
+# ['default', 'test']
+```
+
+执行 `docker-compose logs -f | grep 'test'` 可以看到 Milvus 创建 `test` 数据库的日志：
+
+```{#lst-milvus_test .bash lst-cap="创建数据库日志"}
+milvus-standalone  | [2023/09/26 05:30:03.922 +00:00] [INFO] [proxy/impl.go:174] ["CreateDatabase received"] [traceID=91fb5dbbd0a5a8028b7c048552bbbbb9] [role=proxy] [dbName=test]
+milvus-standalone  | [2023/09/26 05:30:03.922 +00:00] [INFO] [proxy/impl.go:182] ["CreateDatabase enqueued"] [traceID=91fb5dbbd0a5a8028b7c048552bbbbb9] [role=proxy] [dbName=test]
+milvus-standalone  | [2023/09/26 05:30:03.923 +00:00] [INFO] [rootcoord/root_coord.go:772] ["received request to create database"] [traceID=91fb5dbbd0a5a8028b7c048552bbbbb9] [role=rootcoord] [dbName=test] [msgID=444519207108608004]
+milvus-standalone  | [2023/09/26 05:30:03.925 +00:00] [INFO] [rootcoord/meta_table.go:272] ["create database"] [traceID=91fb5dbbd0a5a8028b7c048552bbbbb9] [db=test] [ts=444519207108608005]
+milvus-standalone  | [2023/09/26 05:30:03.925 +00:00] [INFO] [rootcoord/root_coord.go:804] ["done to create database"] [traceID=91fb5dbbd0a5a8028b7c048552bbbbb9] [role=rootcoord] [dbName=test] [msgID=444519207108608004] [ts=444519207108608005]
+milvus-standalone  | [2023/09/26 05:30:03.925 +00:00] [INFO] [proxy/impl.go:190] ["CreateDatabase done"] [traceID=91fb5dbbd0a5a8028b7c048552bbbbb9] [role=proxy] [dbName=test]
+```
+
+## Milvus CLI
+很多时候，使用类似 [mysql](https://dev.mysql.com/doc/refman/8.0/en/mysql.html) 这样的客户端工具来连接数据库并进行相关操作会更便捷。Milvus 也提供了类似的客户端端工具 `milvus_cli`，来方便我们对 Milvus 进行相关操作。
+
+可以采用如下命令来安装 `milvus_cli` 客户端：
+
+```bash
+pip install milvus-cli
+```
+
+具体的使用如图：@fig-milvus_cli。
+
+![使用 milvus_cli 连接 Milvus](./images/milvus_cli_case.jpg){#fig-milvus_cli}
+
+`milvus_cli` 的使用命令参考：[Milvus Client Commands](https://milvus.io/docs/cli_commands.md)。
+
+:::{.callout-warning}
+在安装 `milvus_cli` 的时候，可能会存在依赖库的版本冲突，这可能会导致安装的 `milvus_cli` 无法正常使用，如图 @fig-milvus_cli_2 所示。此时，更新相关依赖的版本，并重新安装 `milvus_cli` 即可。
+
+![milvus_cli 连接超时](./images/milvus_cli_2.jpg){#fig-milvus_cli_2}
+:::

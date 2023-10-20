@@ -1,0 +1,64 @@
+project:
+  type: book
+  output-dir: public  
+
+lang: zh
+
+book:
+  title: "Large Language Model in Action"
+  author: "VII QA"
+  date: today
+  date-format: "YYYY-MM-DD"
+  cover-image: cover.png
+  repo-url: https://github.com/wangwei1237/LLM_in_Action
+  page-footer: Copyright VII-QA. All Rights Reserved.
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - part: "LLMs"
+      chapters:
+      - embedding.qmd
+      - hallucination.qmd
+      - RAG_intro.qmd
+      - agent_intro.qmd
+    - part: "LangChain"
+      chapters:
+      - langchain_intro.qmd
+      - langchain_serialization.qmd
+      - langchain_retrieval.qmd
+      - langchain_function_call.qmd
+      - langchain_agent_react.qmd
+      - langchain_agent_fc.qmd
+      - langchain_agent_pae.qmd
+      - langflow_intro.qmd
+    - part: "Embedchain"
+      chapters:
+      - embedchain_intro.qmd
+    - part: "AutoGen"
+    - part: "Case Study"
+      chapters:
+      - case1.qmd
+    - references.qmd
+  appendices: 
+    - glossary.qmd
+    - install_langchain.qmd
+    - milvus_install.qmd
+
+bibliography: references.bib
+csl: acm-sig-proceedings.csl
+
+format:
+  html:
+    theme: materia
+  pdf:
+    documentclass: scrbook
+    cite-method: biblatex
+    include-in-header: 
+      text: |
+        \usepackage{makeidx}
+        \usepackage{ctex}
+        \usepackage{amsthm,mathrsfs}
+        \makeindex
+    include-after-body: 
+      text: |
+        \printindex

@@ -1,0 +1,21 @@
+---
+title: "术语表"
+---
+
+Embedding：向量
+
+Hallucination：幻觉
+
+ICL(In Context Learning)：上下文学习
+
+LM(Language Model)：语言模型
+
+LLM(Large Language Model)：大语言模型
+
+Prompt：提示词
+
+Prompt Engineering：提示词工程
+
+RAG(Retrieval Augmented Generation)：检索式增强生成
+
+RATG(Retrieval Augmented Text Generation)：检索增强式文本生成

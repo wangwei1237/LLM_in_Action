@@ -1,0 +1,34 @@
+name: Build Book
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      MY_SECRET   : ${{secrets.GH_ACCESS_TOKEN}}
+
+    steps:
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+      - name: Install Python and Dependencies
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - run: pip install jupyter
+      - run: pip install -r requirements.txt
+      - name: Checkout main source
+        uses: actions/checkout@v2
+      - name: Install Quarto Extensions
+        working-directory: ${{ github.workspace }}
+        run: |
+          quarto add --no-prompt quarto-ext/include-code-files
+      - name: Render and Publish
+        run: | 
+          quarto render
