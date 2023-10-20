@@ -16,7 +16,6 @@ jobs:
     steps:
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
-      - name: Install Python and Dependencies
       - name: Checkout main source
         uses: actions/checkout@v2
       - name: Install Quarto Extensions
