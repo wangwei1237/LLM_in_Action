@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ex
+
 if [ $# -ne 2 ]
 then
     echo "::error the parameters error, please check!!!"
