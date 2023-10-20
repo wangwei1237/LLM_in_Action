@@ -1,4 +1,4 @@
-name: Build & Release GitBook
+name: Build & Release Book
 on:
   workflow_dispatch:
     inputs:
@@ -25,37 +25,30 @@ jobs:
     name: Build & Release
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Node.js 10.x
-        uses: actions/setup-node@v2
-        with:
-          node-version: "10.22.0"
-      - name: Setup gitbook
-        run: | 
-          npm install -g npm@8.0.0
-          npm install -g gitbook-cli
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
       - name: Checkout main source
         uses: actions/checkout@v2
-      - name: Build the book
+      - name: Install Quarto Extensions
         working-directory: ${{ github.workspace }}
         run: |
-          mkdir node_modules && cd node_modules && npm install gitbook-plugin-sitemap-general && cd .. 
-          gitbook install
-          cp misc/tbfed-pagefooter_index.js node_modules/gitbook-plugin-tbfed-pagefooter/index.js
-          gitbook build
-          cp misc/style.css _book/gitbook
-          cp misc/website.css _book/gitbook/gitbook-plugin-fontsettings
+          quarto add --no-prompt quarto-ext/include-code-files
+          quarto install --no-prompt tinytex
+      - name: Render and Publish
+        run: | 
+          quarto render
       - name: package the book
         working-directory: ${{ github.workspace }}
         run: |
-          mv _book Kubernetes-in-Action-Second-Edition && tar czvf Kubernetes-in-Action-Second-Edition.tar.gz Kubernetes-in-Action-Second-Edition/*
+          mv public LLM_in_Action && tar czvf LLM_in_Action.tar.gz LLM_in_Action/*
           ls .
       - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.get-upload-url.outputs.upload-url }}
-          asset_path: Kubernetes-in-Action-Second-Edition.tar.gz
-          asset_name: Kubernetes-in-Action-Second-Edition.tar.gz
+          asset_path: LLM_in_Action.tar.gz
+          asset_name: LLM_in_Action.tar.gz
           asset_content_type: application/octet-stream
       - name: trigger the wangwei1237.github.io_src deploy
         run: | 
