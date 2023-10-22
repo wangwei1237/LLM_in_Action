@@ -29,7 +29,7 @@ then
     exit 1
 fi
 
-release_note_url="${URL_PREFIX}/generate-notes"
-curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${token}" "${release_note_url}" -d "{\"tag_name\":\"${version}\"}"
+#release_note_url="${URL_PREFIX}/generate-notes"
+#curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${token}" "${release_note_url}" -d "{\"tag_name\":\"${version}\"}"
 
 echo $upload_url
