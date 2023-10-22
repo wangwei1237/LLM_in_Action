@@ -2,7 +2,7 @@
 
 set -ex
 
-if [ $# -ne 4 ]
+if [ $# -ne 2 ]
 then
     echo "::error the parameters error, please check!!!"
     exit 1
@@ -12,8 +12,6 @@ URL_PREFIX="https://api.github.com/repos/wangwei1237/LLM_in_Action/releases"
 
 version=$1
 token=$2
-notes="$3"
-ROOT="$4"
 
 get_release_url="${URL_PREFIX}/tags/${version}"
 upload_url=$(curl -H "Accept: application/vnd.github.v3+json" "${get_release_url}" | grep 'upload_url' | cut -d'"' -f4)
@@ -31,10 +29,6 @@ then
     exit 1
 fi
 
-release_note_url="${URL_PREFIX}/generate-notes"
-echo "$notes" > $ROOT/release_note_new.md
-ls -l $ROOT/release_note_new.md
-cat $ROOT/release_note_new.md
-curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${token}" "${release_note_url}" -d "{\"tag_name\":\"${version}\", \"configuration_file_path\":\"$ROOT/release_note_new.md\"}"
+curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${token}" "${release_note_url}" -d "{\"tag_name\":\"${version}\"}"
 
 echo $upload_url
