@@ -14,12 +14,15 @@ version=$1
 token=$2
 notes="$3"
 
+echo ${#notes}
+echo ${notes[0]}
+echo ${notes[1]}
+echo ${notes[2]}
+
 get_release_url="${URL_PREFIX}/tags/${version}"
 upload_url=$(curl -H "Accept: application/vnd.github.v3+json" "${get_release_url}" | grep 'upload_url' | cut -d'"' -f4)
 
 create_release_url="${URL_PREFIX}"
-
-curl -X POST -H "Accept: application/vnd.github.v3+json" "${create_release_url}" -H "Authorization: token ${token}" -d "{\"tag_name\":\"${version}\", \"name\":\"Build for ${version}\", \"body\":\"${notes}\"}"
 
 if [ "$upload_url" = "" ]
 then
