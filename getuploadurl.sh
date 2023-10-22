@@ -18,6 +18,9 @@ get_release_url="${URL_PREFIX}/tags/${version}"
 upload_url=$(curl -H "Accept: application/vnd.github.v3+json" "${get_release_url}" | grep 'upload_url' | cut -d'"' -f4)
 
 create_release_url="${URL_PREFIX}"
+
+curl -X POST -H "Accept: application/vnd.github.v3+json" "${create_release_url}" -H "Authorization: token ${token}" -d "{\"tag_name\":\"${version}\", \"name\":\"Build for ${version}\", \"body\":\"${notes}\"}"
+
 if [ "$upload_url" = "" ]
 then
     upload_url=$(curl -X POST -H "Accept: application/vnd.github.v3+json" "${create_release_url}" -H "Authorization: token ${token}" -d "{\"tag_name\":\"${version}\", \"name\":\"Build for ${version}\", \"body\":\"${notes}\"}" | grep 'upload_url' | cut -d'"' -f4)
