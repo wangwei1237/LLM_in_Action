@@ -32,6 +32,8 @@ fi
 
 release_note_url="${URL_PREFIX}/generate-notes"
 echo "$notes" > release_note_new.md
+pwd
+cat release_note_new.md
 curl -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${token}" "${release_note_url}" -d "{\"tag_name\":\"${version}\", \"configuration_file_path\":\"release_note_new.md\"}"
 
 echo $upload_url
