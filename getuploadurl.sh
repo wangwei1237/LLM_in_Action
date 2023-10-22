@@ -13,6 +13,7 @@ URL_PREFIX="https://api.github.com/repos/wangwei1237/LLM_in_Action/releases"
 version=$1
 token=$2
 notes="$3"
+notes=($notes)
 
 echo ${#notes}
 echo ${notes[0]}
