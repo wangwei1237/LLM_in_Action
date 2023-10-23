@@ -70,3 +70,8 @@ format:
   html:
     theme: materia
     cover-image: cover.png
+
+comments:
+  utterances:
+    repo: wangwei1237/LLM_in_Action
+    label: comment
