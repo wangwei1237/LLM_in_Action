@@ -14,15 +14,20 @@ jobs:
   get-upload-url:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - uses: johnyherangi/create-release-notes@main
         id: create-release-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: sudo bash ./getuploadurl.sh ${{ github.event.inputs.version }} ${{ secrets.GITHUB_TOKEN }} | xargs -I {} echo "upload-url={}" >> $GITHUB_OUTPUT
-        id: upload-url
+      - uses: actions/create-release@v1
+        id: create-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: Build for ${{ github.event.inputs.version }}
+          body: ${{ steps.create-release-notes.outputs.release-notes }}
     outputs:
-      upload-url: ${{ steps.upload-url.outputs.upload-url }} 
+      upload-url: ${{ steps.create-release.outputs.upload_url }} 
   
   build:
     needs: get-upload-url
@@ -54,6 +59,11 @@ jobs:
           asset_path: LLM_in_Action.tar.gz
           asset_name: LLM_in_Action.tar.gz
           asset_content_type: application/octet-stream
+  trigger:
+    needs: build
+    name: Trigger the wangwei1237.github.io_src deploy
+    runs-on: ubuntu-latest
+    steps:
       - name: trigger the wangwei1237.github.io_src deploy
         run: | 
           curl -X POST \
