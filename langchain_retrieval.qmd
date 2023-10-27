@@ -224,6 +224,22 @@ vector_db = Milvus.from_documents(
 http://127.0.0.1:8081/v1/vector/collections/describe?collectionName=LangChainCollection
 ```
 
+:::{.callout-note title="修改 Collection 名称"}
+为了方便使用，可以使用 `collection_name` 参数以实现将不同的专有数据源存储在不同的 Collection。
+
+```python
+vector_db = Milvus.from_documents(
+    texts,
+    QianfanEmbeddingsEndpoint(),
+    connection_args={"host": "127.0.0.1", "port": "8081"},
+    collection_name="test", # <1>
+)
+```
+
+1. 设置数据存储的 Collection，类似于在关系数据库中，将数据存储在不同的表中。
+
+:::
+
 :::{.callout-warning}
 使用千帆进行 Embedding 时，每次 Embedding 的 token 是有长度限制的，目前的最大限制是 384 个 token。因此，我们在使用 `RecursiveCharacterTextSplitter` 进行文档拆分的时候要特别注意拆分后文档的长度。
 

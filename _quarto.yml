@@ -43,7 +43,7 @@ book:
     - references.qmd
   appendices: 
     - glossary.qmd
-    - install_langchain.qmd
+    - langchain_install.qmd
     - milvus_install.qmd
   site-url: https://wangwei1237.github.io/LLM_in_Action/
   navbar:

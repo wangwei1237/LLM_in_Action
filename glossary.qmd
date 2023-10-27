@@ -12,6 +12,8 @@ LM(Language Model)：语言模型
 
 LLM(Large Language Model)：大语言模型
 
+NSFW(Not Safe for Work)：用于提醒内容不适合公开场合浏览
+
 Prompt：提示词
 
 Prompt Engineering：提示词工程
@@ -19,3 +21,7 @@ Prompt Engineering：提示词工程
 RAG(Retrieval Augmented Generation)：检索式增强生成
 
 RATG(Retrieval Augmented Text Generation)：检索增强式文本生成
+
+SD(Stable Diffusion)：
+
+t-SNE(t-Distributed, Stochastic neighbor Embedding)：T分布和随机近邻嵌入
