@@ -1,0 +1,8 @@
+# LangChain 安装指南 {#sec-langchain_install}
+
+:::{.callout-tip title="版本建议"}
+使用 LangChain，建议使用 Python 3.10版本。
+
+因为基于 LangChain 的生态对 Python 版本也会有不同的要求，例如 Langflow 要求 Python 版本在 3.9~3.11。因此，如果想使用 LangChain，最好采用 Python 3.10.10 版本。
+:::
+
