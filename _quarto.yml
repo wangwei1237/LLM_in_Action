@@ -6,6 +6,8 @@ lang: zh
 
 book:
   title: "Large Language Model in Action"
+  favicon: favicon.png
+  open-graph: true
   author: "VII QA"
   date: today
   date-format: "YYYY-MM-DD"
@@ -17,9 +19,11 @@ book:
   chapters:
     - index.qmd
     - intro.qmd
-    - part: "LLMs"
+    - part: "LLM 基本概念"
       chapters:
+      - tokens.qmd
       - embedding.qmd
+      - prompt_engineer.qmd
       - hallucination.qmd
       - RAG_intro.qmd
       - agent_intro.qmd
@@ -68,7 +72,10 @@ csl: acm-sig-proceedings.csl
 
 format:
   html:
-    theme: materia
+    theme: 
+      light: [cosmo, theme.scss]
+    code-copy: true
+    code-overflow: wrap
     cover-image: cover.png
 
 comments:

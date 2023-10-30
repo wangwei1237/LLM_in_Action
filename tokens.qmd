@@ -1,0 +1,93 @@
+# Tokens
+
+Tokens（分词） 是 LLM AI 处理文本或代码的基本单位。Tokens 可以是字符（characters）、单词（words）、子单词（subwords）或其他文本段落（segments of text）或代码段落（segments of code），tokens 的具体内容取决于所选的 token 化（tokenization）算法和方法。Tokenization 算法和 tokenizer 是 LLM 的基础组件。
+
+在 token 化过程中，我们会给 token 分配一个数值 ID 对该 token 进行标记，模型的处理过程中处理的实际上是这些 token 的数值化的 ID 标记。
+
+## Tokenizer 工具
+我们可以使用 OpenAI 提供的在线 [Tokenizer Tool](https://platform.openai.com/tokenizer) 来加深对 token 的理解和认识。
+
+![待 token 化的原始文本](./images/token_openai_demo_1.jpg){#fig-token_openai_1}
+
+::: {#fig-elephants layout-ncol=2}
+
+![token 化结果](./images/token_openai_demo_2.jpg){#fig-token_openai_2}
+
+![各 token 的 ID](./images/token_openai_demo_3.jpg){#fig-token_openai_3}
+
+OpenAI GTP-4 tokenization 结果
+:::
+
+在 OpenAI 中，一个 token 大概约等于 4 个英文字母的长度，换算一下的话，大概约是 $\frac{3}{4}$ 个单词。
+
+当然，OpenAI 也支持对中文的 tokenization 处理。 
+
+![待 token 化的中文原始文本](./images/token_openai_demo_c_1.jpg){#fig-token_openai_c1}
+
+::: {#fig-open_token layout-ncol=2}
+
+![中文 token 化结果](./images/token_openai_demo_c_2.jpg){#fig-token_openai_c2}
+
+![各中文 token 的 ID](./images/token_openai_demo_c_3.jpg){#fig-token_openai_c3}
+
+利用 OpenAI GTP-4 对中文进行 tokenization 的结果
+:::
+
+:::{.callout-warning}
+在 @fig-token_openai_c2 中，我们会发现有乱码出现，这主要是因为部分中文会包含一个或多个映射到多个 token 的 unicode 字符。在线化工具会以非标准的方式显示每个 token 中的字节。
+:::
+
+从 @fig-token_openai_c2 中，我们也会发现，对中文的 tokenization 有其独特性——并非将每个汉字都处理为一个 token，有时候一个 token 可能是一个词。例如，”北京“ 在 tokenization 之后是一个 token，其 ID 为 70090。
+
+如果想在代码中使用 OpenAI 的 tokenizer 工具进行 token 化处理，可以使用如下的库：
+
+* Python：[tiktoken](https://github.com/openai/tiktoken)
+* JavaScript: [dqbd/tiktoken](https://github.com/dqbd/tiktoken)
+
+## Tokenization 方式
+把输入/输出文本拆分为 LLM AI 模型可以处理的、更小单元的过程，我们称之为：**Token 化**。如前所述，token 可以是单词、字符、子单词或符号。文本 Token 化之后，模型可以在 token 的基础上处理不同的语言、词汇和格式，并降低处理过程的计算成本和资源成本。Token 化还可以通过影响 token 的含义和上下文来影响生成文本的质量和多样性。
+
+目前主要有三种主流的 tokenization 算法：BPE，WordPiece，Unigram Language Model。
+
+### BPE
+BPE（Byte Pair Encoding）最早是一种数据压缩算法，其思想是将经常一起出现的数据对替换为不在数据串中的其他字符，然后再通过一个 merge 表来恢复原始数据。
+
+在 2015 年，[-@sennrich2016neural] 把该算法引入到 NLP 领域。2019 年，[-@wang2019neural] 又提出了 BBPE（Byte-Level BPE）算法，将 BPE 的思想从字符级别扩展到字节级别。
+
+OpenAI 所采用的 tokenization 算法就是 BPE 算法。BPE 可以帮助模型处理罕见的、或者看不见的单词，并创建更紧凑和一致的文本表示。BPE 还允许模型通过组合现有单词或 token 来生成新单词或 token。词汇量越大，模型生成的文本就越多样化和富有表现力。然而，词汇表越大，模型需要的内存和计算资源就越多。因此，词汇大小的选择取决于模型的质量和效率之间的权衡。
+
+### WordPiece
+[-@pub37842] 提出了用于解决日语和韩语语音问题的 WordPiece。与BPE 类似，WordPiece 也是从一个基础小词表出发，通过不断合并来产生最终的词表。
+
+WordPiece 与 BPE 的主要的差别在于，BPE 按频率来选择合并的 token 对，而 WordPiece 按 token 间的互信息[^1]来进行合并。WordPiece 可以较好的平衡词表大小和 OOV[^2] 问题，但是可能会产生不太合理的、错误的切分，并且 WordPeice 对拼写错误非常敏感，同时其对前缀的支持也不够好。
+
+### Unigram Language Model
+[-@kudo2018subword] 提出了 Unigram Language Model，其核心思想就是先初始化一个大词表，然后通过 unigram 语言模型计算删除不同 subword 造成的损失来代表 subword 的重要性，最后保留 loss 较大或者说重要性较高的 subword。
+
+ULM 是一种基于语言模型的分词算法，这种语言模型可以给多种分词结果赋予概率，从而可以学到其中的噪声，其使用的训练算法可以利用所有可能的分词结果。但是，ULM 的效果与初始词表息息相关，初始词表的好还会影响到最终的结果。
+
+## Token 与模型成本之间的关系
+Tokenization 会影响 LLM 需要处理的数据量和计算次数。LLM 需要处理的 token 越多，模型消耗的内存和计算资源就越多。
+
+因此，运行 LLM 的成本取决于：
+
+1. tokenization 采用的算法和模型所使用的词汇表的大小
+2. 输入/输出文本的长度和复杂性
+
+因此，对于不同的模型[^3]，与模型交互时所使用的 token 数量的不同，最终所花费的成本也不同。对于 OpenAI 而言，GTP4 的费用是 GTP3 的 10 倍，对于 GPT4 而言，32K 上下文模型的费用是 4K 上下文模型费用的 2 倍[^4]。百度的文心 4.0 大模型的费用则是之前版本的 15 倍[^5]。
+
+* 对于 OpenAI 的 gpt-3.5-turbo-16k 模型而言，每 1024 个输入 token 的费用为 0.003\$，每 1024 个输出 token 的费用为 0.004\$。
+* 对于 OpenAI 的 gpt-4 模型而言，每 1024 个输入 token 的费用为 0.03\$，每 1024 个输出 token 的费用为 0.06\$。
+* 对于 OpenAI 的 gpt-4-32k 模型而言，每 1024 个输入 token 的费用为 0.06\$，每 1024 个输出 token 的费用为 0.12\$。
+* 对于百度的 ERNIE-Bot-turbo 模型而言，每 1000 个输入 token 的费用为 0.008￥，每 1000 个输出 token 的费用为 0.008￥。
+* 对于百度的 ERNIE-Bot 4.0 模型而言，每 1000 个输入 token 的费用为 0.12￥，每 1000 个输出 token 的费用为 0.12￥。
+
+[^1]: 在分词领域有时也被称为凝固度、内聚度，可以反映一个词内部的两个部分结合的紧密程度。
+
+[^2]: OOV（Out-of-Vocabulary）：词粒度分词模型只能使用词表中的词来进行处理，无法处理词表之外的词汇，这就是所谓的 OOV 问题。
+
+[^3]: [OpenAI 的模型列表](https://platform.openai.com/docs/models)
+
+[^4]: [OpenAI 计费说明](https://openai.com/pricing)
+
+[^5]: [文心大模型计费说明](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/Blfmc9dlf)

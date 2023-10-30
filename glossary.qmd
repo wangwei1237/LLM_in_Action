@@ -24,4 +24,5 @@ RATG(Retrieval Augmented Text Generation)：检索增强式文本生成
 
 SD(Stable Diffusion)：
 
+SFT(Supervised Fine Tuning): 微调
 t-SNE(t-Distributed, Stochastic neighbor Embedding)：T分布和随机近邻嵌入
