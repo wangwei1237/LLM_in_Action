@@ -1,8 +1,13 @@
 ---
 title: "术语表"
 ---
+Auto-Encoder LM：自编码语言模型
+
+Auto-Decoder LM：自回归语言模型
 
 Embedding：向量
+
+Emergent Ability：涌现
 
 Hallucination：幻觉
 

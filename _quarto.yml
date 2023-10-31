@@ -21,6 +21,7 @@ book:
     - intro.qmd
     - part: "LLM 基本概念"
       chapters:
+      - llm_intro.qmd
       - tokens.qmd
       - embedding.qmd
       - prompt_engineer.qmd
