@@ -27,7 +27,7 @@ book:
       - sft.qmd
       - prompt_engineer.qmd
       - hallucination.qmd
-      - RAG_intro.qmd
+      - rag_intro.qmd
       - agent_intro.qmd
     - part: "LangChain"
       chapters:
