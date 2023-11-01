@@ -24,6 +24,7 @@ book:
       - llm_intro.qmd
       - tokens.qmd
       - embedding.qmd
+      - sft.qmd
       - prompt_engineer.qmd
       - hallucination.qmd
       - RAG_intro.qmd
@@ -52,6 +53,7 @@ book:
     - milvus_install.qmd
   site-url: https://wangwei1237.github.io/LLM_in_Action/
   navbar:
+    logo: favicon.png
     search: true
     left:
       - text: "博客"
