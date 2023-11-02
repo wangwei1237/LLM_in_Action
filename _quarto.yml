@@ -18,7 +18,7 @@ book:
   page-footer: Copyright VII-QA. All Rights Reserved.
   chapters:
     - index.qmd
-    - intro.qmd
+    - preface.qmd
     - part: "LLM 基本概念"
       chapters:
       - llm_intro.qmd
@@ -66,6 +66,8 @@ book:
             href: "https://zh.d2l.ai/"
           - text: "Learn Prompting"
             href: "https://learnprompting.org/zh-Hans/docs/intro"
+          - text: "Stabel Diffusion 提示词手册"
+            href: "https://pan.baidu.com/s/1dciwgbhO-lfKyRo8lOqW9Q?pwd=cm9q"
       - text: "关于"
         icon: "person-badge-fill"
         href: "https://wangwei1237.github.io/aboutme/"

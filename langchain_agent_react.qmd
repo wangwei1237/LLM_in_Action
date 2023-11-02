@@ -496,6 +496,10 @@ class CircumferenceTool(BaseTool):
     def _arun(self, radius: int):
         raise NotImplementedError("This tool does not support async")
 
+
+# when giving tools to LLM, we must pass as list of tools
+tools = [CircumferenceTool()]
+# ...
 ```
 
 ### 多输入参数 {#sec-lc_agent_tools_m}
