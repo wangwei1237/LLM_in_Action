@@ -58,4 +58,4 @@
 :::
 
 [^1]: [Learn Prompting](https://learnprompting.org/zh-Hans/docs/intro)
-[^2]: [Stabel Diffusion 提示词手册](https://learnprompting.org/zh-Hans/docs/intro)
+[^2]: [Stabel Diffusion 提示词手册](https://pan.baidu.com/s/1dciwgbhO-lfKyRo8lOqW9Q?pwd=cm9q)

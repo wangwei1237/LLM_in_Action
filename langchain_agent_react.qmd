@@ -448,7 +448,7 @@ def from_llm_and_tools(
 ) -> Agent:
     """Construct an agent from an LLM and tools."""
     cls._validate_tools(tools)
-    if llm.model_name == "ERNIE-Bot-turbo":   # <3>
+    if "ERNIE" in llm.model_name:   # <3>
         prompt = cls.create_prompt_for_ernie(
             ......
         )

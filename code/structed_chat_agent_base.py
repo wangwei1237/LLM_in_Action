@@ -154,7 +154,7 @@ class StructuredChatAgent(Agent):
     ) -> Agent:
         """Construct an agent from an LLM and tools."""
         cls._validate_tools(tools)
-        if llm.model_name == "ERNIE-Bot-turbo":
+        if "ERNIE" in llm.model_name:
             prompt = cls.create_prompt_for_ernie(
                 tools,
                 prefix=prefix,
