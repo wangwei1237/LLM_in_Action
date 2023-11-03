@@ -1,0 +1,88 @@
+---
+filters:
+   - include-code-files
+code-annotations: below
+---
+
+# LangChain Chat Agent
+
+在 @sec-lc_react 中，除了 `Structured Chat Agent` 外，我们所介绍的 Agent 都是非 `Chat` 模式的 Agent。这里的 `Chat` 模式类似 @sec-LLMs 中介绍的 LLM 的 `Chat` 模式，其最主要的特点就是：他们以聊天消息列表格式的提示词作为输入。
+
+## 修改 Chat Agent 的提示词逻辑
+因为文心大模型 `Chat` 模式的 message 消息类型和 `OpenAI` 的不同——缺少 `SystemMessage` 类型，因此，如果要让 `Chat Agent` 支持文心，需要按照 @lst-lc_struct_agent_fixed_for_ernine 的思路对其 Prompt 的生成方式进行修改。
+
+```python
+@classmethod
+def create_prompt_for_ernie(
+    ......
+) -> BasePromptTemplate:
+    ......
+    messages = [
+        HumanMessagePromptTemplate.from_template(template),     # <1>
+        AIMessagePromptTemplate.from_template("YES, I Know."),  # <2>
+        *_memory_prompts,
+        HumanMessagePromptTemplate.from_template(human_message_template),
+    ]
+    return ChatPromptTemplate(input_variables=input_variables, messages=messages)
+```
+
+## ChatConversationAgent
+参照 @lst-map_agent_type_class 和 @lst-la_conversation_demo，我们可以构建一个 `chat-conversational-react-description`。
+
+```{#lst-la_chat_conversation_demo .python include="./code/test_chat_coversation_agent.py" code-line-numbers="true" lst-cap="Chat Conversation Agent"}
+```
+
+但是，执行 @lst-la_chat_conversation_demo 时，却报错了：
+
+```bash
+Traceback (most recent call last):
+  File "code/test_chat_coversation_agent.py", line 38, in <module>
+    chat_conversation_agent("4.1*7.9=?")
+  ...
+ValueError: variable chat_history should be a list of base messages, got  #<1>
+```
+
+1. chat_history 变量必须是一个消息列表
+
+## MessagesPlaceholder
+我们说过，Agent 本质上就是 LLM，既然 @lst-la_chat_conversation_demo 执行有异常，那我们就看下他的提示词究竟是怎么实现的（具体实现位于 `langchain/agents/conversation_chat/base.py` 的 `create_prompt()`）。
+
+```python
+messages = [
+    SystemMessagePromptTemplate.from_template(system_message),
+    MessagesPlaceholder(variable_name="chat_history"),  #<1>
+    HumanMessagePromptTemplate.from_template(final_prompt),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+]
+```
+
+1. 从提示词的构造方式上，`chat_history` 是通过 `MessagesPlaceholder` 构造的。而此处的 `chat_history` 又是通过 `ConversationBufferMemory` 获取的。
+
+```python
+memory = ConversationBufferMemory(memory_key="chat_history")
+```
+
+`ConversationBufferMemory` 返回的内容逻辑如下所示：
+
+```python
+@property
+def buffer(self) -> Any:
+    """String buffer of memory."""
+    return self.buffer_as_messages if self.return_messages else self.buffer_as_str #<1>
+
+```
+
+1. 根据 `return_messages` 来返回不同格式的记忆。
+
+而在 LangChain 中，`return_messages` 默认值为 `False`，因此，实际上 `buffer()` 返回的是**字符串格式**的内容。这就是导致执行异常的根本原因。
+
+为了解决这个问题，我们需要在初始化 `ConversationBufferMemory` 时，配置 `return_messages` = `True`。 
+
+```{#lst-la_chat_conversation_demo_1 .python include="./code/test_chat_coversation_agent_1.py" code-line-numbers="true" lst-cap="Chat Conversation Agent"}
+```
+
+1. 通过设置 `return_messages` 为 `True` 以返回消息列表格式的记忆内容。
+
+:::{.callout-warning}
+例如本节中提到的 LangChain 相关基建对文心大模型支持不够友好的问题，最好的修复方案还是给 LangChain 提交 `PR` 来解决。不过，一直没有想到比较优雅的修改方法，所以一直就耽搁着。如果您有比较好的想法，可以直接给 [LangChain](https://github.com/langchain-ai/langchain/pulls) 提交 `PR`。
+:::

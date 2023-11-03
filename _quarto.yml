@@ -36,6 +36,7 @@ book:
       - langchain_retrieval.qmd
       - langchain_function_call.qmd
       - langchain_agent_react.qmd
+      - langchain_agent_chat.qmd
       - langchain_agent_fc.qmd
       - langchain_agent_pae.qmd
       - langflow_intro.qmd
