@@ -11,7 +11,7 @@ from langchain.agents import Tool
 from langchain.memory import ConversationBufferMemory
 from langchain.agents import initialize_agent
 
-memory = ConversationBufferMemory(memory_key="chat_history") #<1>
+memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True) #<1>
 
 llm = ErnieBotChat(model_name="ERNIE-Bot-4")
 

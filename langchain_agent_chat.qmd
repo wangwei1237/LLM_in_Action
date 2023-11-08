@@ -84,5 +84,5 @@ def buffer(self) -> Any:
 1. 通过设置 `return_messages` 为 `True` 以返回消息列表格式的记忆内容。
 
 :::{.callout-warning}
-例如本节中提到的 LangChain 相关基建对文心大模型支持不够友好的问题，最好的修复方案还是给 LangChain 提交 `PR` 来解决。不过，一直没有想到比较优雅的修改方法，所以一直就耽搁着。如果您有比较好的想法，可以直接给 [LangChain](https://github.com/langchain-ai/langchain/pulls) 提交 `PR`。
+例如本节中提到的 LangChain 相关基建对文心大模型支持不够友好的问题，最好的修复方案还是给 LangChain 提交 `PR` 来解决。我们给 LangChain 提交了 PR [12921](https://github.com/langchain-ai/langchain/pull/12921)，还在等待官方的审核。如果您有比较好的想法，可以直接给 [LangChain](https://github.com/langchain-ai/langchain/pulls) 提交 `PR`。
 :::

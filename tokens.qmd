@@ -44,6 +44,10 @@ OpenAI GTP-4 tokenization 结果
 * Python：[tiktoken](https://github.com/openai/tiktoken)
 * JavaScript: [dqbd/tiktoken](https://github.com/dqbd/tiktoken)
 
+对于文心大模型而言，我们可以使用 [千帆Token计算器](https://console.bce.baidu.com/tools/#/tokenizer) 来计算输入文本的 token 数量。
+
+![千帆Token计算器](./images/wenxi_tokenizer.jpg){#fig-wenxin_tokenizer}
+
 ## Tokenization 方式
 把输入/输出文本拆分为 LLM AI 模型可以处理的、更小单元的过程，我们称之为：**Token 化**。如前所述，token 可以是单词、字符、子单词或符号。文本 Token 化之后，模型可以在 token 的基础上处理不同的语言、词汇和格式，并降低处理过程的计算成本和资源成本。Token 化还可以通过影响 token 的含义和上下文来影响生成文本的质量和多样性。
 
