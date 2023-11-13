@@ -1,3 +1,9 @@
+---
+filters:
+   - include-code-files
+code-annotations: below
+---
+
 # LangChain 函数调用
 
 ::: {.callout-tip title="要点提示"} 
@@ -10,7 +16,8 @@
 * `函数调用` 会涉及到如下的步骤：
   * 调用包含 `函数` 的 `模型`
   * 处理 `函数` 响应
-  * 将 `函数` 响应返回给 `模型`，以进行进一步的处理货这生成更友好的用户响应 
+  * 将 `函数` 响应返回给 `模型`，以进行进一步的处理货这生成更友好的用户响应
+* 根据 [文心开发者文档](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/xlmokikxe)，在文心 4.0 中，也增加了 `函数调用` 的能力，其原理和使用和 OpenAI 相似。
 :::
 
 ## 大模型的时效性
@@ -44,7 +51,7 @@ OpenAI 开发的大语言模型（例如GPT-3.5-turbo-0613，GPT-4-0613）提供
 
 利用 `函数调用`，LLMs 可以很方便的将自然语言指令转变为相关的函数调用，例如：可以把“给张三发一封邮件询问下他下周五下午是否需要一杯咖啡” 这样的提示转换为 `send_email(to: string, body: string)` 函数调用。
 
-## 示例
+## OpenAI 函数调用
 ### OpenAI API
 
 ```{#lst-fc_openai .python lst-cap="使用 OpenAI API 进行函数调用示例"}
@@ -201,7 +208,7 @@ print(res)
 }
 ```
 
-### LangChain 中调用 OpenAI Functions
+### OpenAI 函数调用 LLMChain
 
 可以参考 LangChain 官方文档以在 LangChain 中使用 OpenAI `函数调用` 的能力。[^3]
 
@@ -316,6 +323,105 @@ Human: What's the weather like in Beijing tomorrow?
 -------------The 1-st langchain result-------------
 {'name': 'get_current_weather', 'arguments': {'location': 'Beijing'}}
 ```
+
+## 文心 4.0 函数调用
+### 文心 API
+在使用 文心 4.0 的函数调用之前，首先需要安装 `qianfan` 库：
+
+```bash
+pip install qianfan
+```
+
+我们首先对本章前面提到的 `get_current_news` 和 `get_current_weather` 这两个函数实现其 JSON-Schema 描述：
+
+```{#lst-la_fc_fd .python include="./code/functions_desc.py" code-line-numbers="true" lst-cap="待调用函数的函数描述"}
+```
+
+```{#lst-la_fc_fd_qf_demo .python code-line-numbers="true" lst-cap="使用千帆 API 实现文心大模型的函数调用"}
+import qianfan
+
+chat_comp = qianfan.ChatCompletion()
+
+resp = chat_comp.do(model="ERNIE-Bot-4",  #<1>
+                    messages=[{"role": "user", "content": "北京的新闻是什么？"}], #<2>
+                    functions=functions) #<3>
+ 
+print(resp)
+```
+
+1. 指定采用的模型名称
+2. 和大模型交互的消息列表
+3. 告诉大模型我们有哪些函数可以调用，以及对应函数的具体描述，具体参见 @lst-la_fc_fd
+
+@lst-la_fc_fd_qf_demo 的运行结果如下：
+
+```bash
+QfResponse(code=200, headers={...}, body={'id': 'as-cvbbn9t0vq', 'object': 'chat.completion', 'created': 1699708273, 'result': '', 'is_truncated': False, 'need_clear_history': False, 'function_call': {'name': 'get_current_news', 'thoughts': '用户想要知道北京的新闻。我可以使用get_current_news工具来获取这些信息。', 'arguments': '{"location":"北京"}'}, 'usage': {...})
+```
+
+通过结果我们可以发现，文心大模型的 `函数调用` 和 OpenAI 的 `函数调用` 虽然有完全一致，但是还是非常相似的。对于有可以调用的函数时，文心大模型的返回结果中的 `resp.result` 为空，同时用 `resp.function_call` 存储针对当前问题，经过大模型分析后可以调用的函数以及调用函数时所用到的参数。具体接下来的函数调用过程，就和 OpenAI 一致了，可以参考 @lst-fc_openai。
+
+### 文心函数调用 LLMChain
+目前，LangChain 并不支持像 @lst-fc_multi_fcs 那样，通过 `create_openai_fn_chain()` 来进行函数调用。如果要实现该通能，需要对 LangChain 进行扩展，增加 `create_ernie_fn_chai()`。可以参照 `create_openai_fn_chain()` 来实现 `create_ernie_fn_chain()`，具体需要修改的代码参考：[wangwei1237-patch-3](https://github.com/wangwei1237/langchain/pull/2)。
+
+:::{.callout-note}
+因为文心大模型的返回有自己的特性，在调用文心 API 时，对于存在 `functions` 参数的场景，其请求结果中的 `function_call` 字段是独立于 `result` 字段单独存在的。
+
+```python
+QfResponse(code=200, headers={...}, body={'id': 'as-cvbbn9t0vq', 'object': 'chat.completion', 'created': 1699708273, 'result': '', 'is_truncated': False, 'need_clear_history': False, 'function_call': {'name': 'get_current_news', 'thoughts': '用户想要知道北京的新闻。我可以使用get_current_news工具来获取这些信息。', 'arguments': '{"location":"北京"}'}, 'usage': {...})
+```
+
+而当前 LangChain 中对 LLM 返回的解析一般是对结果中的 `result` 字段进行解析。因此，要使用文心大模型的 `函数调用` 能力，同时还需要对 `ErnieBotChat` 进行升级。
+
+```python
+def _create_chat_result(self, response: Mapping[str, Any]) -> ChatResult:
+    if 'function_call' in response:
+        function_call_str = '{{"function_call": {}}}'.format(
+            json.dumps(response.get("function_call")))
+        generations = [
+            ChatGeneration(message=AIMessage(content=function_call_str))
+        ]
+    else:
+        generations = [
+            ChatGeneration(message=AIMessage(content=response.get("result")))
+        ]
+    #...
+```
+:::
+
+完成如上的修改之后，可以像 @lst-fc_multi_fcs 那样来简化大语言模型的 `函数调用` 过程。
+
+```{#lst-fc_multi_fcs_ernie .python code-line-numbers="true" lst-cap="使用 LangChain 执行文心大模型的函数调用"}
+from langchain.chat_models import ErnieBotChat
+from langchain.prompts import ChatPromptTemplate
+from langchain.chains.ernie_functions import (
+    create_ernie_fn_chain,
+)
+
+llm = ErnieBotChat(model_name="ERNIE-Bot-4")
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("human", "{query}"),
+    ]
+)
+
+chain = create_ernie_fn_chain([get_current_weather, get_current_news], llm, prompt, verbose=True)
+res = chain.run("北京今天新闻是什么？")
+print(res)
+```
+
+@lst-fc_multi_fcs_ernie 运行结果如下：
+
+```bash
+> Entering new LLMChain chain...
+Prompt after formatting:
+Human: 北京今天新闻是什么？
+
+> Finished chain.
+{'name': 'get_current_news', 'thoughts': '用户想要知道北京今天的新闻。我可以使用get_current_news工具来获取这些信息。', 'arguments': {'location': '北京'}}
+```
+
+接下来，根据文心大模型的返回内容，同时根据之前所述的 OpenAI 的 `函数调用` 方式来调用大模型返回的函数并获取对应信息即可。
 
 ## 参考文献
 [^1]: [Function calling and other API updates](https://openai.com/blog/function-calling-and-other-api-updates)
