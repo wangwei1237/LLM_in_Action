@@ -362,7 +362,7 @@ QfResponse(code=200, headers={...}, body={'id': 'as-cvbbn9t0vq', 'object': 'chat
 通过结果我们可以发现，文心大模型的 `函数调用` 和 OpenAI 的 `函数调用` 虽然有完全一致，但是还是非常相似的。对于有可以调用的函数时，文心大模型的返回结果中的 `resp.result` 为空，同时用 `resp.function_call` 存储针对当前问题，经过大模型分析后可以调用的函数以及调用函数时所用到的参数。具体接下来的函数调用过程，就和 OpenAI 一致了，可以参考 @lst-fc_openai。
 
 ### 文心函数调用 LLMChain
-目前，LangChain 并不支持像 @lst-fc_multi_fcs 那样，通过 `create_openai_fn_chain()` 来进行函数调用。如果要实现该通能，需要对 LangChain 进行扩展，增加 `create_ernie_fn_chai()`。可以参照 `create_openai_fn_chain()` 来实现 `create_ernie_fn_chain()`，具体需要修改的代码参考：[wangwei1237-patch-3](https://github.com/wangwei1237/langchain/pull/2)。
+目前，LangChain 并不支持像 @lst-fc_multi_fcs 那样，通过 `create_openai_fn_chain()` 来进行函数调用。如果要实现该通能，需要对 LangChain 进行扩展，增加 `create_ernie_fn_chai()`。可以参照 `create_openai_fn_chain()` 来实现 `create_ernie_fn_chain()`，具体需要修改的代码参考：[feat: add ERNIE-Bot-4 Function Calling](https://github.com/langchain-ai/langchain/pull/13320)。
 
 :::{.callout-note}
 因为文心大模型的返回有自己的特性，在调用文心 API 时，对于存在 `functions` 参数的场景，其请求结果中的 `function_call` 字段是独立于 `result` 字段单独存在的。
@@ -422,6 +422,37 @@ Human: 北京今天新闻是什么？
 ```
 
 接下来，根据文心大模型的返回内容，同时根据之前所述的 OpenAI 的 `函数调用` 方式来调用大模型返回的函数并获取对应信息即可。
+
+## 根据 LLM 的返回调用对应函数
+如前所述，LLMs 会根据当前的信息返回它认为我们应该调用的函数以及函数对应的参数，具体的函数执行还是需要我们手动执行。为了进一步简化该过程，我们对这个过程进行了抽象，具体如 @lst-la_wx_fc_run。
+
+```{#lst-la_wx_fc_run .python include="./code/langchain/utils/call_function.py" code-line-numbers="true" lst-cap="utils.call_function.call_function()"}
+```
+
+通过文心大模型的函数调用解决我们的问题的完整代码如 @lst-la_wx_fc_demo_all 所示。
+
+```{#lst-la_wx_fc_demo_all .python include="./code/test_ernie_fc.py" code-line-numbers="true" lst-cap="文心大模型利用函数调用解决问题"}
+```
+
+@lst-la_wx_fc_demo_all 的执行结果如下所示：
+
+```bash
+> Entering new LLMChain chain...
+Prompt after formatting:
+Human: 北京今天的新闻是什么？
+
+> Finished chain.
+
+
+> Entering new LLMChain chain...
+Prompt after formatting:
+Human: 从 get_current_news 中，我们得到如下信息：{"location": "\u5317\u4eac", "news": ["I have a Book.", "It's a nice day, today."]}，那么 北京今天的新闻是什么？
+
+> Finished chain.
+根据提供的信息，`get_current_news` 返回的数据中，"北京"的新闻有两条，分别是 "I have a Book." 和 "It's a nice day, today."。所以，北京今天的新闻包括这两条信息。
+```
+
+
 
 ## 参考文献
 [^1]: [Function calling and other API updates](https://openai.com/blog/function-calling-and-other-api-updates)
