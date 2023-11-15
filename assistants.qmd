@@ -1,0 +1,95 @@
+# Assistant
+
+2023 年，11 月 6 日，OpenAI 召开了第一次开发者大会——[OpenAI DevDay](https://devday.openai.com/)，这次大会的相关内容可以参见：[OpenAI DevDay, Opening Keynote](https://www.bilibili.com/video/BV1au4y1a78B/?spm_id_from=333.337.search-card.all.click&vd_source=fbeb46d16d08ad900fac814e55c3f27f)。
+
+在这次大会上，为了简化使用大模型开发订制助理的步骤，OpenAI 正式发布了 [`Assistant API`](https://platform.openai.com/docs/assistants/overview)（视频中的第 1:02:47 处）。
+
+我们可以使用 `Assistant API` 在自己的应用程序中构建人工智能助手。助手由如下几部分构成：
+
+* `name`：用于指定助理的名字。
+* `instructions`：用于指定助手的个性并定义其目标，和 `system message` 有些类似。
+* `tools`：用于指定助手可以访问的工具。助手可以访问多达128个工具，可以访问 OpenAI 托管的工具，也可以通过 `函数调用` 访问第三方的工具。目前 OpenAI 提供了三个工具：代码解释器、检索、函数调用。
+
+:::{.callout-tip}
+更详细的文档可以参考 [Assistant Overview](https://platform.openai.com/docs/assistants/overview)。
+:::
+
+助手可以根据说明并使用工具来响应用户的请求。实际上，OpenAI Assistant 其实和 @sec-agent 中介绍的 Agent 的概念非常相似。在 LangChain 的官方文档中，[OpenAI Assistant](https://python.langchain.com/docs/modules/agents/agent_types/openai_assistants) 也是作为一种 Agent 类型存在的，可见从 LangChain 的角度来看，OpenAI Assistant 本质上也是一种 Agent。而 `Assistant API` 的发布，则提高了我们开发 OpenAI Assistant 的效率。
+
+在 [OpenAI 的技术论坛](https://community.openai.com/)上，也有用户表示自己的疑惑：[`Assistant API` 和 LangChain 究竟有什么区别呢？](https://community.openai.com/t/the-difference-of-assistant-api-and-langchain/496223)。正如这个帖子下面的回复，Assistant API 和 LangChain Agent 都是在做同样的事情，只是在某些方面， Assistant API 更友好而已。
+
+> `Assistant API` and LangChain are basically doing the same thing. Both require programming. The **only advantage of `Assistant API`** is that memory and context window are automatically managed where in LangChain you have explicitly set those things up.
+
+## Assisant API 的框架
+OpenAI Assistant API 的架构图如 @sec-assistant 所示。
+
+![OpenAI Assistant API 架构图](./images/diagram-assistant.webp){#fig-d_assistant}
+
+在 [Assistant Overview](https://platform.openai.com/docs/assistants/overview) 中，已经对该图做了非常多的解释，但是在我看来，最令人兴奋的能力是访问持久化线程的能力。
+
+:::{.callout-note}
+助理可以访问持久线程。线程通过存储消息历史记录来简化人工智能应用程序的开发，并在对话太长而超出模型的上下文长度时将其截断。
+
+使用 `Assistant API`，我们只需创建一次线程，然后我们可以在该线程内进行连续的多轮对话，而多轮对话需要的 `记忆` 功能，OpenAI 统统帮我们实现了（而如果使用 LangChain 或其他框架，这些都需要我们自己来实现）。我们可以轻松的实现如下的多轮会话：
+
+* 1 + 1 =?
+* 那么，再加10的结果是？
+* ……
+:::
+
+## Assistant 运行状态
+和进程类似，`Assistant API` 创建的线程在回答用户的问题时（对应 @fig-d_assistant 中的 Run 阶段），也会存在各种状态的转换。每一次执行的具体的状态转化如 @fig-openai_ass_status 所示。
+
+![Assistant API 线程每次执行的生命周期](./images/diagram-status.png){#fig-openai_ass_status}
+
+| 状态 | 状态含义 |
+| --------- | --------- |
+| `queued` | 首次创建助理并执行或完成 `required_action` 时，将转变为 `queued` 状态。`queued` 状态应该立即转到 `in_progress`。 |
+| `in_progress` | 在 `in_progress` 时，助理使用模型和工具执行相关操作。我们可以通过检 [Run Step](https://platform.openai.com/docs/api-reference/runs/step-object) 来获取这次执行的具体进度。 |
+| `completed` | 一旦这次执行成功，就会转到该状态，此时，我们可以查看助理返回的所有消息。我们还可以通过该线程继续进行下一轮的对话。 |
+| `requires_action` | 当使用 `函数调用` 时，一旦模型确定了要调用的函数的名称和参数，线程将转变为 `required_action` 状态。然后，我们必须运行这些函数并提交函数响应，才能继续运行。如果在 `expires_at` 时间戳达到时（创建后大约10分钟）还没有提交函数的运行结果，则此次执行将进入 `expired` 状态。 |
+| `expired` | 当 `函数调用` 的输出未在 `expires_at` 之前提交时，就会发生这种情况。此外，如果此次执行时间过长，超过`expires_at` 规定的时间时，也会转换到该状态。 |
+| `cancelling` | 我们可以使用 [Cancel Run API](https://platform.openai.com/docs/api-reference/runs/cancelRun) 取消 `in_progress` 中的某次执行。一旦取消成功，此次执行的状态将变为 `cancelled`。需要注意的是，`Assistant API` 仅仅是尝试取消，但不能保证取消成功。 |
+| `cancelled` | 如果某次执行已经成功取消，则转到该状态。|
+| `failed` | 执行失败是，转为该状态。可以通过 `last_error` 查看失败原因。 |
+
+: Assistant API 中不同的状态及其含义 {#tbl-ass_status}
+
+因为 `Assistant API` 提供的线程是持久线程，因此，每当我们需要使用该线程处理用户需求时，我们最好及时的查询该线程当前的状态，以避免出现非预期的结果。
+
+## Assistant API 示例
+
+```{#lst-ass_code_demo .python code-line-numbers="true" lst-cap="Assistant API 示例"}
+from langchain.agents.openai_assistant import OpenAIAssistantRunnable
+
+interpreter_assistant = OpenAIAssistantRunnable.create_assistant(
+    name="langchain assistant",
+    instructions="You are a personal math tutor. Write and run code to answer math questions.",
+    tools=[{"type": "code_interpreter"}],
+    model="gpt-4-1106-preview",
+) # <1>
+
+output = interpreter_assistant.invoke({"content": "What's 10 - 4 raised to the 2.7"}) # <2>
+print(output)
+
+"""
+[ThreadMessage(id='msg_6Gj48OdMV8dQrFUPTh17UvG4', assistant_id='asst_19av1lcBjSCQ5cEk4pWqugEU', content=[MessageContentText(text=Text(annotations=[], value='The result of the expression \\(10 - 4^{2.7}\\) is approximately \\(-32.224\\).'), type='text')], created_at=1700038489, file_ids=[], metadata={}, object='thread.message', role='assistant', run_id='run_4wK9GIK2W0iiJlLB86DKoMQQ', thread_id='thread_Ie874bQrsaakLMpOMZe2KUav')]
+""" #<3>
+
+output_2 = interpreter_assistant.invoke({"content": "Then, Add 10 to the result", "thread_id": "thread_Ie874bQrsaakLMpOMZe2KUav"}) #<4>
+print(output_2) 
+
+"""
+[ThreadMessage(id='msg_xRoHzvCdtqW9NRWxmE36VMZG', assistant_id='asst_mEAcerOkTv1IyggYoU3jTNMn', content=[MessageContentText(text=Text(annotations=[], value='After adding 10 to the previous result, the new result is approximately -22.224.'), type='text')], created_at=1700038760, file_ids=[], metadata={}, object='thread.message', role='assistant', run_id='run_ubrOtRXh6ITIRQ4BbPMk5juV', thread_id='thread_Ie874bQrsaakLMpOMZe2KUav')]
+""" #<5>
+```
+
+1. 创建 Assistant 线程
+2. 计算 $10-4^{2.7}$
+3. 获得结果 -32.224，同时返回线程 id 等其他信息
+4. 在当前结果基础上，继续用同一个线程执行 $res + 10$
+5. 获得结果 -22.224
+
+更多的 `Assistant API` 的使用例子，我们在 @sec-assistant 中再介绍。
+
+

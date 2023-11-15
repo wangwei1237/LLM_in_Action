@@ -29,6 +29,7 @@ book:
       - hallucination.qmd
       - rag_intro.qmd
       - agent_intro.qmd
+      - assistants.qmd
     - part: "LangChain"
       chapters:
       - langchain_intro.qmd
@@ -37,6 +38,7 @@ book:
       - langchain_function_call.qmd
       - langchain_agent_react.qmd
       - langchain_agent_chat.qmd
+      - langchain_openai_assistant.qmd
       - langchain_agent_fc.qmd
       - langchain_agent_pae.qmd
       - langflow_intro.qmd
