@@ -21,7 +21,7 @@
 > `Assistant API` and LangChain are basically doing the same thing. Both require programming. The **only advantage of `Assistant API`** is that memory and context window are automatically managed where in LangChain you have explicitly set those things up.
 
 ## Assisant API 的框架
-OpenAI Assistant API 的架构图如 @sec-assistant 所示。
+OpenAI Assistant API 的架构图如 @fig-d_assistant 所示。
 
 ![OpenAI Assistant API 架构图](./images/diagram-assistant.webp){#fig-d_assistant}
 
@@ -91,5 +91,3 @@ print(output_2)
 5. 获得结果 -22.224
 
 更多的 `Assistant API` 的使用例子，我们在 @sec-assistant 中再介绍。
-
-

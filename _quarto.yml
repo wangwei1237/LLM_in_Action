@@ -42,10 +42,10 @@ book:
       - langchain_agent_fc.qmd
       - langchain_agent_pae.qmd
       - langflow_intro.qmd
-    - part: "Embedchain"
+    - part: "其他框架"
       chapters:
+      - autogen.qmd
       - embedchain_intro.qmd
-    - part: "AutoGen"
     - part: "Case Study"
       chapters:
       - case1.qmd
