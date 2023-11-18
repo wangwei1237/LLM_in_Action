@@ -19,7 +19,7 @@ LangChain 虽然是一个非常年轻的框架，但又是一个发展速度非�
 作为一个年轻而又活力的框架，LangChain 正在彻底改变工业和技术，改变我们与技术的每一次互动。
 
 :::{.callout-tip}
-可以使用 @sec-langflow 中介绍的 Langflow 来对 LangChain 进行可视化操作。
+可以使用 @sec-lf_langflow 中介绍的 Langflow 来对 LangChain 进行可视化操作。
 :::
 
 ## LangChain 的目标
@@ -306,22 +306,7 @@ res =  chain.run(name="小明", user_input="请仅给5个表示快乐的成语�
 print(res)
 # ['以下是五个表示快乐的成语：\n\n1. 喜出望外\n2. 乐不可支\n3. 心花怒放\n4. 满心欢喜\n5. 手舞足蹈']
 ```
-## Langflow {#sec-langflow}
-[Langflow](https://github.com/logspace-ai/langflow) 是 LangChain 的非官方的 UI。使用 Langflow，我们可以更简便的以可视化的方式来体验 LangChain 并为基于 LangChain 的大语言应用提供原型设计能力。
 
-::: {.content-visible when-format="html"}
-
-![Langflow 示例](./images/langflow-demo.gif){#fig-langflow_demo}
-
-:::
-
-::: {.content-visible when-format="pdf"}
-
-![Langflow 示例](./images/langflow-demo.jpg){#fig-langflow_demo}
-
-:::
-
-想要深入了解 Langflow，可以阅读 Langflow 的[官方文档](https://docs.langflow.org/)。
 
 ## LangChain 的学习资料
 

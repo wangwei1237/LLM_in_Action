@@ -15,7 +15,7 @@ book:
   repo-url: https://github.com/wangwei1237/LLM_in_Action
   repo-actions: [edit, issue]
   search: true
-  page-footer: Copyright VII-QA. All Rights Reserved.
+  page-footer: Copyright VII-QA. All Rights Reserved
   chapters:
     - index.qmd
     - preface.qmd
@@ -41,11 +41,11 @@ book:
       - langchain_openai_assistant.qmd
       - langchain_agent_fc.qmd
       - langchain_agent_pae.qmd
-      - langflow_intro.qmd
     - part: "其他框架"
       chapters:
       - autogen.qmd
       - embedchain_intro.qmd
+      - langflow_intro.qmd
     - part: "Case Study"
       chapters:
       - case1.qmd
@@ -54,7 +54,6 @@ book:
     - glossary.qmd
     - langchain_install.qmd
     - milvus_install.qmd
-  site-url: https://wangwei1237.github.io/LLM_in_Action/
   navbar:
     logo: favicon.png
     search: true

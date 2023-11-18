@@ -1,6 +1,8 @@
 ---
 title: "术语表"
 ---
+AGI(Artificial General Intelligence)：通用人工智能
+
 Auto-Encoder LM：自编码语言模型
 
 Auto-Decoder LM：自回归语言模型

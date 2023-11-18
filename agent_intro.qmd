@@ -66,7 +66,7 @@ ReAct 使 LLM 能够以交错的方式生成 `reasoning traces` 和 `text action
 实际上，和 @fig-agent_seq 所示的流程是一致的。
 
 :::{.callout-note}
-ReAct 也称为 Action Agent，在 ReAct 模式系下，代理的下一步动作由之前的输出来决定，其本质是对 Prompt 进行优化的结果，一般可以用于规模较小的任务。
+ReAct 也称为 Action Agent，在 ReAct 模式系下，Agent 的下一步动作由之前的输出来决定，其本质是对 Prompt 进行优化的结果，一般可以用于规模较小的任务。
 :::
 
 ## PlanAndExecute 模式
@@ -89,14 +89,34 @@ ReAct 也称为 Action Agent，在 ReAct 模式系下，代理的下一步动作
 目前，BabyAGI 也采用了类似的模式[^3]，更多关于 PlanAndExecute 模式的底层细节，可以参考 [-@wang2023planandsolve]。
 
 :::{.callout-note}
-该模式下，代理将大型任务分解为较小的、可管理的子目标，从而可以高效处理复杂任务。
+该模式下，Agent 将大型任务分解为较小的、可管理的子目标，从而可以高效处理复杂任务。
 
 这种方式可以通过 `计划` 让 LLM 更加“按部就班”，更加可靠。但是其代价在于，这种方法需要更多的 LLM 交互，也必然具有更高的延迟。[^4]
 :::
+
+## Multi-Agent {#sec-multiagent}
+到现在为止，我们所讲的 Agent 都是 Single-Agent，也就是说我们仅在这个单独的 Agent 中（没有和其他的 Agent 交互），就完成了用户提出的任务。在 [-@multiagentintro] 中提到，Multi-Agent 是分布式 AI 领域的一个分支，强调在不同的 Agent 之间进行协作以完成用户的任务，这个时候的 Multi-Agent 主要存在于强化学习和博弈论(game theory) 的相关研究中。[-@talebirad2023multiagent] 提出了一种新的框架，通过利用 Multi Agent 系统的能力来增强大型语言模型 LLM 的能力，在这个新的框架中，作者引入了一个协作环境，在这个环境中，Multi Agent 组件（每个组件具有独特的属性和角色，可以由不同的 LLM 来驱动）协同工作，从而可以更高效、更有效地处理复杂的任务。
+
+:::{.callout-note title="Multi Agent 的定义"}
+从本质上讲，Multi LLM Agent 是涉及到多个 LLM 驱动的 Agent 协同工作的融合体。与传统的 Single Agent 不同，Multi Agent 系统由各种 AI Agent 组成，每个 Agent 专门研究不同的领域，有助于全面解决问题。这种协作、协同效应产生了更细致和有效的解决方案。
+:::
+
+正如 @fig-autogen 所示，Multi Agent 系统可以通过不同 Agent 之间的协作来完成更为复杂的事情。
+
+![AutoGen 的 Multi Agent 架构图[^5]](./images/autogen_2.webp){#fig-autogen}
+
+Multi Agent 的优势如下[^6]：
+
+* **专业技能更强：**在 Multi Agent 系统中，每个 Agent 都拥有各自领域的专业知识，使其能够提供深入、准确的响应。这种专业知识的广度确保了所生成的解决方案是全面和知情的。
+* **问题解决能力更强：**复杂的问题往往需要采用不同层面的、综合的方法，Multi Agent 通过整合各个 Agent 的集体智慧，通过利用不同 Agent 各自的优势，以提供单 LLM 或者 单 Agent 难以解决的问题。正所谓：众人晒柴火焰高。
+* **稳定性更高：**冗余和可靠性是人工智能驱动解决方案的关键因素。从架构上讲，Multi Agent 降低了单点故障的风险，如果一个 Agent 遇到问题或限制，其他 Agent 则可以介入，以确保整体系统的稳定性。
+* **适应性更好：**在一个充满活力的世界里，适应性至关重要。Multi Agent 可以随着时间的推移而发展，新的 Agent 可以无缝集成以应对新出现的挑战。
 
 ## 参考文献
 [^1]: [Reactor Pattern](https://en.wikipedia.org/wiki/Reactor_pattern)
 [^2]: [react 官网](https://react.dev/)
 [^3]: [BabyAGI](https://github.com/yoheinakajima/babyagi)
 [^4]: [Plan-and-Execute Agents](https://blog.langchain.dev/plan-and-execute-agents/)
+[^5]: [AutoGen](https://www.microsoft.com/en-us/research/project/autogen/)
+[^6]: [Revolutionizing AI: The Era of Multi-Agent Large Language Models](https://gafowler.medium.com/revolutionizing-ai-the-era-of-multi-agent-large-language-models-f70d497f3472#:~:text=Multi%2Dagent%20LLM%2C%20in%20essence,contributing%20to%20comprehensive%20problem%2Dsolving.)
 

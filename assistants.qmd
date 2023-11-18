@@ -1,4 +1,4 @@
-# Assistant
+# Assistant {#sec-assistant_intro}
 
 2023 年，11 月 6 日，OpenAI 召开了第一次开发者大会——[OpenAI DevDay](https://devday.openai.com/)，这次大会的相关内容可以参见：[OpenAI DevDay, Opening Keynote](https://www.bilibili.com/video/BV1au4y1a78B/?spm_id_from=333.337.search-card.all.click&vd_source=fbeb46d16d08ad900fac814e55c3f27f)。
 

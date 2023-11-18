@@ -1,3 +1,65 @@
-# AutoGen
+---
+filters:
+   - include-code-files
+code-annotations: below
+---
 
-[-@langchainvsautogen]
+# AutoGen
+在看了 [OpenAI DevDay](https://www.bilibili.com/video/BV1au4y1a78B/?spm_id_from=333.337.search-card.all.click&vd_source=fbeb46d16d08ad900fac814e55c3f27f) 的相关直播后，我曾经认为，Assistant API（@sec-assistant_intro） 完全可以秒杀 AutoGen 了。
+
+在 AutoGen 的讨论区中，我发现大家也有同样的思考。在 [New OpenAI Assistants / Assistants API](https://github.com/microsoft/autogen/discussions/575) 的讨论中，有用户说到：
+
+> I am trying to understand if the new OpenAI Assistants API is different conceptually or even technically from Autogen? Is it really the same idea and almost same approach, just packaged in a more accessible way? 
+
+后来，我慢慢的明白了，如 @sec-multiagent 所述，AutoGen 是一种 MultiAgent 框架，而 Assistant API 本质上是一种 Sigle Agent。AutoGen 引入了多 Agent 交互、协同的机制，并且还给人类干预提供了机会，使得人机结合成为可能，也更大程度的激发了 LLM 的能量。
+
+所以，Assistant API 的发布不但不会影响 AutoGen 的发展，反而会促进 AutoGen 的发展。
+
+## AutoGen 概述
+AutoGen 是由微软、宾夕法尼亚州立大学和华盛顿大学联合推出的 Multi Agent 框架，我们可以使用 AutoGen 管理多个 Agent 来开发 LLM 应用程序。在 AutoGen 框架下，多个不同的 Agent 之间可以通过交互来完成任务。
+
+我们可以在 [github/microsoft/autogen](https://github.com/microsoft/autogen) 上获取最新的 AutoGen 版本，我们也可以在这个项目的 [讨论区](https://github.com/microsoft/autogen/discussions) 来进行相关技术的探讨。
+
+AutoGen 框架中的 Agent 是可定制的、可交互的、可人工干预的，AutoGen 框架下的 Agents 既可以是 LLM 模式，也可以是人工操作或者工具集模式。
+
+在我看来，AutoGen 的最大魅力来在于其允许不同 Agent 之间的可交互性以及人工干预的能力，这最大程度的促进了人机结合的可能性，为实现最终的超级 AGI 智能体迈出了一大步。
+
+![AutoGen 示意图](./images/autogen_agentchat.png){#fig-autogen_autogen} 
+
+根据 @fig-autogen_autogen，AutoGen 有以下的几个特点：
+
+* **构建效率高：**AutoGen 简化了开发复杂 LLM 工作流所涉及到的编排、自动化、优化等工作，能够以最小的开发成本构建基于 Multi Agents 对话的下一代 LLM 应用程序。
+* **可对话性：**AutoGen 支持多个 Agents 之间的交互协同，并且不同的 Agents 都可以根据实际需求进行定制，我们可以使用 AutoGen 构建广泛的应用（例如，不同的 Agent 数量，不同的 Agent 拓扑结构……），以完成不同的任务。
+
+除此之外，AutoGen 还提供了增强的 LLM 推理能力、统一的 API、如错误处理、多配置推理、上下文编程等各种能力，以进一步提升开发 LLM 原生应用程序的效率。
+
+## AutoGen 生成股价趋势图
+
+## AutoGen Vs LangChain
+像 AutoGen 这样的 Multi Agent 给了我们非常大的想象空间，但是这是否意味着像如 LangChain 这样的 Single Agent 框架——直到现在，LangChain 还没有支持 Multi Agent——会过时呢？
+
+LangChain 的 CEO & 联合创始人 Harrison Chase 在 Reddit 上开了一个 [AMA 讨论区](https://www.reddit.com/r/LangChain/comments/17ffvxo/im_harrison_chase_ceo_and_cofounder_of_langchain/)，并在这个讨论区和大家一起讨论和 LangChain 有关的话题。
+
+在这个讨论区中，有个用户提了一个 [LangChain 是否会支持 Multi Agent](https://www.reddit.com/r/LangChain/comments/17ffvxo/comment/k69qe2x/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) 的问题：
+
+> As far as I know, the library seems to provide support to single agents and some experimental support to other types of agent runtimes (eg. BabyAGI, AutoGPT). Do you have any plans to include multi-agent support like autogen?
+
+针对这一问题，Harrison Chase [回复道](https://www.reddit.com/r/LangChain/comments/17ffvxo/comment/k69qtoc/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)：“LangChain 是否支持 Multi Agent 主要是看 Multi Agent 是否有具体的应用场景和案例。”。
+
+> Yes we are considering it. The main thing blocking us from investing more is concrete use cases where multi agent frameworks are actually helpful. If you (or anyone) has ideas/suggestions we would love to hear so we can implement them!
+
+从这里可以看出，LangChain 完全是基于实用目的而开发。AutoGen 是个好东西，但是是否有合适的场景必须采用 AutoGen 才能实现呢？目前 AutoGen 给的可以应用的场景，是否用 LangChain 也可以完成呢？
+
+就像编程语言有面向函数编程和面相对象编程一样，LangChain 和 AutoGen 各自都有各自的战场，很难说谁会完全替代谁。
+
+![不同 Agents 之间的关系和编程语言元素之间关系的类比](./images/progandagents.png){#fig-prog_and_agents}
+
+从本质上讲，LangChain 是一个构建 Agent 的框架，它提供了创建和部署 Agent 所需的工具和基础设施；而 AutoGen 是一个可以与多个 Agent 进行对话、交互的 Agent。
+
+我更喜欢 LangChain，除了 Harrison Chase 提到的应用场景的问题之外，对我而言，LangChain 提供了多模型的统一接口，这使得其他模型接入起来非常方便。而 AutoGen 目前仅支持 GPTs 类模型，虽然可以使用 [FastChat](https://github.com/lm-sys/FastChat) [接入其他的模型](https://microsoft.github.io/autogen/blog/2023/07/14/Local-LLMs/)，但是整个的过程还是比较繁琐的。
+
+当问及 LangChain 的方向时，Harrison Chase 说到：[没有人可以确切的直到 LangChain 会走向何方？](https://www.reddit.com/r/LangChain/comments/17ffvxo/comment/k69uo54/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+
+>  think part of the fun is no one really knows where LangChain will go (or where the space will go) :)
+
+未来，当 Multi Agent 真的非常重要时，LangChain 获取也会引入 Multi Agent。

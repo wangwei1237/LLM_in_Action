@@ -1,1 +1,17 @@
-# Langflow {#sec-langflow_intro}
+# Langflow {#sec-lf_langflow}
+
+[Langflow](https://github.com/logspace-ai/langflow) 是 LangChain 的非官方的 UI。使用 Langflow，我们可以更简便的以可视化的方式来体验 LangChain 并为基于 LangChain 的大语言应用提供原型设计能力。
+
+::: {.content-visible when-format="html"}
+
+![Langflow 示例](./images/langflow-demo.gif){#fig-langflow_demo}
+
+:::
+
+::: {.content-visible when-format="pdf"}
+
+![Langflow 示例](./images/langflow-demo.jpg){#fig-langflow_demo}
+
+:::
+
+想要深入了解 Langflow，可以阅读 Langflow 的[官方文档](https://docs.langflow.org/)。
