@@ -364,6 +364,10 @@ QfResponse(code=200, headers={...}, body={'id': 'as-cvbbn9t0vq', 'object': 'chat
 ### 文心函数调用 LLMChain
 目前，LangChain 并不支持像 @lst-fc_multi_fcs 那样，通过 `create_openai_fn_chain()` 来进行函数调用。如果要实现该通能，需要对 LangChain 进行扩展，增加 `create_ernie_fn_chai()`。可以参照 `create_openai_fn_chain()` 来实现 `create_ernie_fn_chain()`，具体需要修改的代码参考：[feat: add ERNIE-Bot-4 Function Calling](https://github.com/langchain-ai/langchain/pull/13320)。
 
+:::{.callout-tip title="GOOD NEWS"}
+[feat: add ERNIE-Bot-4 Function Calling](https://github.com/langchain-ai/langchain/pull/13320) 已经合入 LangChain 的代码，LangChain 已经原生支持文心大模型的 `函数调用` 功能。
+:::
+
 :::{.callout-note}
 因为文心大模型的返回有自己的特性，在调用文心 API 时，对于存在 `functions` 参数的场景，其请求结果中的 `function_call` 字段是独立于 `result` 字段单独存在的。
 
