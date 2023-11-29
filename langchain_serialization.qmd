@@ -1,5 +1,160 @@
+---
+filters:
+   - include-code-files
+code-annotations: below
+---
+
 # LangChain 序列化
+使用 [Docker Hub](https://dockerhub.p2hp.com/)，我们可以非常方便的查找、使用和共享容器，这简直是开发者的福音。
 
-## 序列化
+```bash
+$ docker pull ubuntu
+$ docker run -it ubuntu
+```
 
-## LangChain-Hub
+正如 @sec-prompt_engineering 所述，prompt 在 AI 原生应用具有非常重要的地位。为了能够方便 prompt 的查找、使用和共享，LangChain 为我们提供了一系列的序列化的能力，包括 prompt 序列化，chain 序列化……
+
+序列化能力可以让我们实现代码模块化，并且会大大简化在团队内部或更广泛的组织之间共享 prompt 的过程，也更有利于 prompt 的壮大和发展。
+
+## prompt 序列化
+在 LangChain 中，prompt 的序列化支持两种格式：`YAML`，`JSON`，可以使用文件扩展名来标识序列化的文件格式。
+
+我们可以用 `PromptTemplate.save()` 对 @lst-prompt 所示的 prompt 进行序列化，并使用 `load_prompt` 从序列化文件中加载已经存储好的 prompt。
+
+```python
+from langchain import PromptTemplate
+
+prompt_files = ["prompt_template.json", "prompt_template.yaml"]
+prompt_template = PromptTemplate.from_template(
+    "请以轻松欢快的语气写一篇描写 {topic} 的文章，字数不超过 {count} 字。"
+)
+[prompt_template.save(f) for f in prompt_files]
+```
+
+生成的序列化 prompt 文件如下所示：
+
+::: {.panel-tabset group="prompt_save_types"}
+
+## YAML
+```yaml
+_type: prompt #<1>
+input_types: {}
+input_variables: #<2>
+- count
+- topic
+output_parser: null
+partial_variables: {}
+template: "\u8BF7\u4EE5\u8F7B\u677E\u6B22\u5FEB\u7684\u8BED\u6C14\u5199\u4E00\u7BC7\
+  \u63CF\u5199 {topic} \u7684\u6587\u7AE0\uFF0C\u5B57\u6570\u4E0D\u8D85\u8FC7 {count}\
+  \ \u5B57\u3002" #<3>
+template_format: f-string
+validate_template: false
+```
+
+1. 该序列化的类型 
+2. prompt 模版中的变量名
+3. prompt 模版内容
+
+## JSON
+```json
+{
+    "input_variables": [
+        "count",
+        "topic"
+    ],  
+    "input_types": {},
+    "output_parser": null,
+    "partial_variables": {},
+    "template": "\u8bf7\u4ee5\u8f7b\u677e\u6b22\u5feb\u7684\u8bed\u6c14\u5199\u4e00\u7bc7\u63cf\u5199 {topic} \u7684\u6587\u7ae0\uff0c\u5b57\u6570\u4e0d\u8d85\u8fc7 {count} \u5b57\u3002",
+    "template_format": "f-string",
+    "validate_template": false,
+    "_type": "prompt"
+}
+```
+:::
+
+从 `prompt_template.json` 文件中加载其中存储的 prompt。
+
+```python
+from langchain.prompts import load_prompt
+
+prompt = load_prompt("prompt_template.json")
+res = prompt.format(topic="秋天", count=100)
+print(res)
+# 请以轻松欢快的语气写一篇描写 秋天 的文章，字数不超过 100 字。
+```
+
+## LangChain Hub
+如果我们希望在团队内部或者和其他人共享我们的 prompt，那么仅依靠序列化还是远远不够的。和 Docker Hub 类似，[LangChain Hub](https://docs.smith.langchain.com/hub/quickstart) 为我们共享、查找 prompt 提供了非常好的能力支撑。
+
+但是，比较遗憾的是，目前 LangChain Hub 还处于内测期，非内测用户无法获取 `LANGCHAIN_HUB_API_KEY`，因此也无法把自己的 prompt 上传到 LangChain Hub 中，也无法使用 `hub.pull()` 加载 prompt。
+
+但是，好消息是，我们可以通过 LangChain Hub 的 [web 页面](https://smith.langchain.com/hub?organizationId=c4887cc4-1275-5361-82f2-b22aee75bad1) 以访问现存的所有的开放 prompt，这个对于我们学习 prompt 还是有很大帮助的。
+
+## LangChainHub
+岁让 LangChain Hub 还在内测中，但是这点困难毫不影响我们分享 prompt 的决心。[hwchase17/langchain-hub](hwchase17/langchain-hub) 这个项目就实现了 LangChain Hub 的功能，并且目前该项目也已经集成到了 LangChain，LangChain 可以原生支持从 [hwchase17/langchain-hub](hwchase17/langchain-hub) 仓库中拉取 prompt。我们可以非常方便的将我们自己的 prompt 提交到该仓库以供其他人使用。
+
+为了研究 LangChain 是如何使用 `hwchase17/langchain-hub` 的，我们需要分析 `load_prompt()` 的底层原理。
+
+```{#lst-load_prompt_function .python lst-cap="load_prompt() 的实现"}
+HUB_PATH_RE = re.compile(r"lc(?P<ref>@[^:]+)?://(?P<path>.*)") #<1>
+
+def try_load_from_hub(
+    path: Union[str, Path],
+    loader: Callable[[str], T],
+    valid_prefix: str,
+    valid_suffixes: Set[str],
+    **kwargs: Any,
+) -> Optional[T]:
+    """Load configuration from hub.  Returns None if path is not a hub path."""
+    if not isinstance(path, str) or not (match := HUB_PATH_RE.match(path)): #<2>
+        return None
+    #……
+    #……
+
+def load_prompt(path: Union[str, Path]) -> BasePromptTemplate:
+    """Unified method for loading a prompt from LangChainHub or local fs."""
+    if hub_result := try_load_from_hub(
+        path, _load_prompt_from_file, "prompts", {"py", "json", "yaml"}
+    ): #<3>
+        return hub_result
+    else:
+        return _load_prompt_from_file(path)
+
+```
+
+1. 加载的 `hwchase17/langchain-hub` 文件名的正则表达式
+2.  如果 path 不符合 `lc://prompts/path/to/file.json` 的格式，直接返回
+3. 如果 path 符合 `lc://prompts/path/to/file.json` 的格式，则尝试从 `hwchase17/langchain-hub` 下载对应文件，并通过 `_load_prompt_from_file()` 加载 prompt
+
+```{#lst-load_prompt_from_lc .python lst-cap="加载 hwchase17/langchain-hub 中的 prompt"}
+from langchain.prompts import load_prompt
+prompt = load_prompt('lc://prompts/hello-world/prompt.yaml')
+res = prompt.format()
+print(res)
+
+# No `_type` key found, defaulting to `prompt`.
+# Say hello world.
+```
+
+## 自定义 LangChainHub
+从 `try_load_from_hub()` 的代码实现我们发现，LangChain 默认从 `{URL_BASE}` 下加载我们给定的资源，也就是加载 `{URL_BASE}/prompt_file` 文件。
+
+```python
+DEFAULT_REF = os.environ.get("LANGCHAIN_HUB_DEFAULT_REF", "master")
+URL_BASE = os.environ.get(
+    "LANGCHAIN_HUB_URL_BASE",
+    "https://raw.githubusercontent.com/hwchase17/langchain-hub/{ref}/",
+)
+
+def try_load_from_hub(): 
+    #……
+    full_url = urljoin(URL_BASE.format(ref=ref), PurePosixPath(remote_path).__str__())
+```
+
+而 `URL_BASE` 是通过环境变量的方式来配置的，这使得我们自定义一个 LangChainHub 变得非常简单。我们只需要搭建一个自己的文件服务器（`my_file_server_domain`），然后用 `my_file_server_domain` 替换 `URL_BASE` 即可。
+
+```bash
+$ export LANGCHAIN_HUB_URL_BASE=${my_file_server_domain}
+```
+

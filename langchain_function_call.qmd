@@ -42,7 +42,7 @@ OpenAI 开发的大语言模型（例如GPT-3.5-turbo-0613，GPT-4-0613）提供
 ![OpenAI 的函数调用流程](images/function_calling_1.png){#fig-function_calling_step}
 
 ::: {.callout-caution title="注意"}
-需要特别注意的是，大语言模型本身并不会调用我们预定的 `函数`，大语言模型仅仅是生成我们所要调用的函数的调用参数而言，具体调用函数的动作，需要我们在自己的应用代码中来实现。[^2]
+需要特别注意的是，大语言模型本身并不会调用我们预定的 `函数`，大语言模型仅仅是生成我们所要调用的函数的调用参数而已，具体调用函数的动作，需要我们在自己的应用代码中来实现。[^2]
 :::
 
 ::: {.callout-important title="思考"}
@@ -359,7 +359,7 @@ print(resp)
 QfResponse(code=200, headers={...}, body={'id': 'as-cvbbn9t0vq', 'object': 'chat.completion', 'created': 1699708273, 'result': '', 'is_truncated': False, 'need_clear_history': False, 'function_call': {'name': 'get_current_news', 'thoughts': '用户想要知道北京的新闻。我可以使用get_current_news工具来获取这些信息。', 'arguments': '{"location":"北京"}'}, 'usage': {...})
 ```
 
-通过结果我们可以发现，文心大模型的 `函数调用` 和 OpenAI 的 `函数调用` 虽然有完全一致，但是还是非常相似的。对于有可以调用的函数时，文心大模型的返回结果中的 `resp.result` 为空，同时用 `resp.function_call` 存储针对当前问题，经过大模型分析后可以调用的函数以及调用函数时所用到的参数。具体接下来的函数调用过程，就和 OpenAI 一致了，可以参考 @lst-fc_openai。
+通过结果我们可以发现，文心大模型的 `函数调用` 和 OpenAI 的 `函数调用` 虽然不完全一致，但是还是非常相似的。对于有可以调用的函数时，文心大模型的返回结果中的 `resp.result` 为空，同时用 `resp.function_call` 存储针对当前问题，经过大模型分析后可以调用的函数以及调用函数时所用到的参数。具体接下来的函数调用过程，就和 OpenAI 一致了，可以参考 @lst-fc_openai。
 
 ### 文心函数调用 LLMChain
 目前，LangChain 并不支持像 @lst-fc_multi_fcs 那样，通过 `create_openai_fn_chain()` 来进行函数调用。如果要实现该通能，需要对 LangChain 进行扩展，增加 `create_ernie_fn_chai()`。可以参照 `create_openai_fn_chain()` 来实现 `create_ernie_fn_chain()`，具体需要修改的代码参考：[feat: add ERNIE-Bot-4 Function Calling](https://github.com/langchain-ai/langchain/pull/13320)。
