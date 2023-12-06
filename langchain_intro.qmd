@@ -1,3 +1,9 @@
+---
+filters:
+   - include-code-files
+code-annotations: below
+---
+
 # LangChain 简介
 
 ::: {.callout-tip title="要点提示"} 
@@ -196,12 +202,44 @@ print(res)
 # additional_kwargs={} example=False
 ```
 
-#### 文心 4.0 {.unnumbered}
+#### 文心 4.0
 在 LangChain 中，要使用 文心 4.0 模型，可以在初始化 LLM 时设置 `model_name` 参数为 `ERNIE-Bot-4`。
 
 ```python
 llm = ErnieBotChat(model_name="ERNIE-Bot-4")
 ```
+
+#### 百度千帆
+根据 LangChain 官网的 [ErnieBotChat 文档](https://python.langchain.com/docs/integrations/chat/ernie)，已经不建议再使用 `ErnieBotChat` 进行文心大模型的调用，并且建议使用 [百度千帆 `QianfanChatEndpoint`](https://python.langchain.com/docs/integrations/chat/baidu_qianfan_endpoint)。
+
+建议使用百度千帆（`QianfanChatEndpoint`）主要基于如下的因素：
+
+* QianfanChatEndpoint 支持千帆平台中的更多LLM
+* QianfanChatEndpoint 支持 Stream 传输
+* QianfanChatEndpoint 支持函数调用
+
+但是，除了 Stream 传输外，其余的两个优势目前 `ErnieBotChat` 也都具备了，并且 `ErnieBotChat` 的优点还在于不需要引入额外的 `qianfan` 库。所以在二者的使用上大家根据自己的具体需求来选择就好。
+
+在使用 `QianfanChatEndpoint` 时，需要将 `ernie_client_id` 改为 `qianfan_ak`，把 `ernie_client_secret` 改为 `qianfan_sk`。
+
+```bash
+export ERNIE_CLIENT_ID="……"
+export ERNIE_CLIENT_SECRET="……"
+export QIANFAN_AK="${ERNIE_CLIENT_ID}"
+export QIANFAN_SK="${ERNIE_CLIENT_SECRET}"
+```
+
+::: {.panel-tabset group="ernie_and_qianfan"}
+## QianfanChatEndpoint
+
+```{#lst-lc_intro_qianfan .python include="./code/test_qianfanendpoint.py" code-line-numbers="true" lst-cap="使用 QianfanChatEndpoint 调用文心大模型"}
+```
+
+## ErnieBotChat
+```{#lst-lc_intro_wx_qianfan .python include="./code/test_wx_qianfan.py" code-line-numbers="true" lst-cap="使用 ErnieBotChat 调用文心大模型"}
+```
+
+:::
 
 ### Output Parsers
 大语言模型一般会输出文本内容作为响应，当然更高级的大语言模型（例如文心大模型）还可以输出图片、视频作为响应。但是，很多时候，我们希望可以获得更结构化的信息，而不仅仅是回复一串字符串文本。

@@ -41,6 +41,9 @@ book:
       - langchain_openai_assistant.qmd
       - langchain_agent_fc.qmd
       - langchain_agent_pae.qmd
+    - part: "Sematic Kernel"
+      chapters:
+      - sematickernel_intro.qmd
     - part: "其他框架"
       chapters:
       - autogen.qmd
