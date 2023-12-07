@@ -58,8 +58,8 @@ LangChain 的 CEO & 联合创始人 Harrison Chase 在 Reddit 上开了一个 [A
 
 我更喜欢 LangChain，除了 Harrison Chase 提到的应用场景的问题之外，对我而言，LangChain 提供了多模型的统一接口，这使得其他模型接入起来非常方便。而 AutoGen 目前仅支持 GPTs 类模型，虽然可以使用 [FastChat](https://github.com/lm-sys/FastChat) [接入其他的模型](https://microsoft.github.io/autogen/blog/2023/07/14/Local-LLMs/)，但是整个的过程还是比较繁琐的。
 
-当问及 LangChain 的方向时，Harrison Chase 说到：[没有人可以确切的直到 LangChain 会走向何方？](https://www.reddit.com/r/LangChain/comments/17ffvxo/comment/k69uo54/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+当问及 LangChain 的方向时，Harrison Chase 说到：[没有人可以确切的知道 LangChain 会走向何方？](https://www.reddit.com/r/LangChain/comments/17ffvxo/comment/k69uo54/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
 
 >  think part of the fun is no one really knows where LangChain will go (or where the space will go) :)
 
-未来，当 Multi Agent 真的非常重要时，LangChain 获取也会引入 Multi Agent。
+未来，当 Multi Agent 真的非常重要时，LangChain 或许也会引入 Multi Agent。

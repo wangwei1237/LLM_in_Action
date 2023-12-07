@@ -365,7 +365,7 @@ QfResponse(code=200, headers={...}, body={'id': 'as-cvbbn9t0vq', 'object': 'chat
 目前，LangChain 并不支持像 @lst-fc_multi_fcs 那样，通过 `create_openai_fn_chain()` 来进行函数调用。如果要实现该通能，需要对 LangChain 进行扩展，增加 `create_ernie_fn_chai()`。可以参照 `create_openai_fn_chain()` 来实现 `create_ernie_fn_chain()`，具体需要修改的代码参考：[feat: add ERNIE-Bot-4 Function Calling](https://github.com/langchain-ai/langchain/pull/13320)。
 
 :::{.callout-tip title="GOOD NEWS"}
-[feat: add ERNIE-Bot-4 Function Calling](https://github.com/langchain-ai/langchain/pull/13320) 已经合入 LangChain 的代码，LangChain 已经原生支持文心大模型的 `函数调用` 功能。
+[feat: add ERNIE-Bot-4 Function Calling](https://github.com/langchain-ai/langchain/pull/13320) 已经合入 LangChain 的代码，LangChain 已经原生支持文心大模型的 `函数调用` 功能。为了兼容 `QianfanChatEndpoint`，我们对 `create_ernie_fn_chain()` 进行了升级，具体参见：[langchain/pull/14275](https://github.com/langchain-ai/langchain/pull/14275)。
 :::
 
 :::{.callout-note}
@@ -377,6 +377,9 @@ QfResponse(code=200, headers={...}, body={'id': 'as-cvbbn9t0vq', 'object': 'chat
 
 而当前 LangChain 中对 LLM 返回的解析一般是对结果中的 `result` 字段进行解析。因此，要使用文心大模型的 `函数调用` 能力，同时还需要对 `ErnieBotChat` 进行升级。
 
+::: {.panel-tabset group="ernie_update"}
+
+## 方式一
 ```python
 def _create_chat_result(self, response: Mapping[str, Any]) -> ChatResult:
     if 'function_call' in response:
@@ -391,11 +394,37 @@ def _create_chat_result(self, response: Mapping[str, Any]) -> ChatResult:
         ]
     #...
 ```
+
+## 方式二
+
+```python
+def _create_chat_result(self, response: Mapping[str, Any]) -> ChatResult:
+    if "function_call" in response:
+         additional_kwargs = {
+                "function_call": dict(response.get("function_call", {}))
+            }
+    else:
+        additional_kwargs = {}
+    generations = [
+        ChatGeneration(
+            message=AIMessage(
+                content=response.get("result"),
+                additional_kwargs={**additional_kwargs},
+            )
+        )
+    ]
+    # ...
+```
+:::
+
 :::
 
 完成如上的修改之后，可以像 @lst-fc_multi_fcs 那样来简化大语言模型的 `函数调用` 过程。
 
-```{#lst-fc_multi_fcs_ernie .python code-line-numbers="true" lst-cap="使用 LangChain 执行文心大模型的函数调用"}
+::: {.panel-tabset group="ernie_fc_d"}
+
+## ErnieBotChat
+```{#lst-fc_multi_fcs_ernie .python code-line-numbers="true" lst-cap="使用 ErnieBotChat 执行文心大模型的函数调用"}
 from langchain.chat_models import ErnieBotChat
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains.ernie_functions import (
@@ -414,7 +443,29 @@ res = chain.run("北京今天新闻是什么？")
 print(res)
 ```
 
-@lst-fc_multi_fcs_ernie 运行结果如下：
+## QianfanChatEndpoint
+
+```{#lst-fc_multi_fcs_qianfan .python code-line-numbers="true" lst-cap="使用 QianfanChatEndpoint 执行文心大模型的函数调用"}
+from langchain.chat_models import QianfanChatEndpoint
+from langchain.prompts import ChatPromptTemplate
+from langchain.chains.ernie_functions import (
+    create_ernie_fn_chain,
+)
+
+llm = QianfanChatEndpoint(model="ERNIE-Bot-4")
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("human", "{query}"),
+    ]
+)
+
+chain = create_ernie_fn_chain([get_current_weather, get_current_news], llm, prompt, verbose=True)
+res = chain.run("北京今天新闻是什么？")
+print(res)
+```
+
+:::
+@lst-fc_multi_fcs_ernie，@lst-fc_multi_fcs_qianfan 的运行结果如下：
 
 ```bash
 > Entering new LLMChain chain...
