@@ -69,7 +69,7 @@ ReAct 使 LLM 能够以交错的方式生成 `reasoning traces` 和 `text action
 ReAct 也称为 Action Agent，在 ReAct 模式系下，Agent 的下一步动作由之前的输出来决定，其本质是对 Prompt 进行优化的结果，一般可以用于规模较小的任务。
 :::
 
-## PlanAndExecute 模式
+## PlanAndExecute 模式 {#sec-agent_pae}
 如前所述，Action Agent 适用于规模较小的任务。当任务规模较大，而任务的解决又高度依赖 Agent 来驱动并完成时，Action Agent 就开始变得捉襟见肘。
 
 我们即希望 Agent 能够处理更加复杂的任务，又希望 Agent 具备较高的稳定性和可靠性。这中既要又要的目标导致 Agent 的提示词变得越来越大，越来越复杂。

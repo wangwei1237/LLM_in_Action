@@ -4,7 +4,7 @@ filters:
 code-annotations: below
 ---
 
-# LangChain 简介
+# LangChain 简介 {#sec-LC_intro}
 
 ::: {.callout-tip title="要点提示"} 
 我们不想花更多的力气来实现和LLM交互的流程，而是更关注于业务逻辑的实现；我们也不想重复编写相似的流程代码，而是可以共享我们的成果，别人只需要键入 `docker pull` 就可以使用我们的成果……如果你有这样的想法，那么 LangChain 正是你的菜~

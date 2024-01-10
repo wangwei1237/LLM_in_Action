@@ -1,0 +1,184 @@
+---
+filters:
+   - include-code-files
+code-annotations: below
+---
+
+# Sematic Kernel 简介 {#sec-SK}
+
+和 @sec-LC_intro 中介绍的 LangChain 一样，Semantic Kernel 也是一种便于使用 LLM 开发应用的框架，如果特殊说明，当提到 SK 的时候，我们一般说的就是 Semantic Kernel 框架。使用 SK，我们可以更加轻松的将传统的编程语言和 LLM 技术结合在一起，并使用 SK 中提供的开箱即用的各种组件，更加便利的开发我们的 AI 原生应用。
+
+自 从 2023 年 3 月在 GitHub 开源以来，SK 已经获得了 [15.9K](https://github.com/microsoft/semantic-kernel) 的 Starred，虽然比 [LangChain](https://github.com/langchain-ai/langchain) 的 Starred 少，但是也足以看出 SK 在社区的流行度。从 @fig-code_freq_sdk 也可以看出，SK 的代码改动频率持续维持在相对较高的水平，这也表明 SK 的能力也在不断完善。
+
+::: {#fig-code_freq_sdk layout-ncol=2}
+
+![LangChain 的代码提交频率](./images/code_freq_lc.jpg){#fig-code_freq_lc}
+
+![Semantic Kernel 的代码提交频率](./images/code_freq_sk.jpg){#fig-code_freq_sk}
+
+LangChain 和 Semantic Kernel 的代码提交频率
+:::
+
+在 2023 年 5 月 举办的 [Microsoft Build 2023](https://news.microsoft.com/build-2023/) 大会上，微软 CTO——Kevin Scott 做了题为 [The era of the AI Copilot](https://build.microsoft.com/en-US/sessions/bb8f9d99-0c47-404f-8212-a85fffd3a59d?source=/speakers/ef864919-5fd1-4215-b611-61035a19db6b) 的分享，在这次分享中，Kevin Scott 介绍了微软如何通过大模型技术堆栈（@fig-copilot_stack）来实现 AI Copilot 产品，并介绍了处于该技术堆栈中心的 AI 编排层，AI 编排层可以将 大模型和插件集成在一起，为用户创造全新的体验。
+
+::: {#fig-copilot_stack layout-nrow=2}
+
+![Microsoft's Copilot Stack](./images/copilot_stack_1.png){#fig-copilot_stack_1}
+
+![Copilot Stack 简图](./images/copilot_stack_2.png){#fig-copilot_stack_2}
+
+Kevin Scott 分享中提到的 Microsoft Copilot 技术堆栈
+
+:::
+
+而在微软的内部，Kevin Scott 提到的 AI 编排层指的就是 Semantic kernel。因此，虽然 SK 还比较年轻，但是他已经在微软的明星产品（Bing、Microsoft Copilot……）中发挥着重要的作用。
+
+如 @fig-sk_application_process，我们也可以利用 SK，非常方便的让我们的应用也具备大模型 AI 的能力。
+
+![利用 SK 把大模型能力加入到应用的过程](./images/sk_application_process.jpg){#fig-sk_application_process}
+
+当然，LangChain 的 联合创始人 & CEO 也受邀参加了此次 Microsoft Build 大会，Kevin Scott 也在分享中提到（分享的第 28:20 处）：在 AI 编排层，LangChain 也是非常优秀的开源框架之一。
+
+:::{.callout-tip}
+在我看来，Semantic 和 LangChain 就好像是 [Vim](https://www.vim.org/) 和 [Emacs](https://www.gnu.org/software/emacs/) 一样，两者都是年轻又优秀的 AI 编排框架。但是个人认为，从应用开发的角度上讲，SK 对于应用开发更为友好，比如：提示词和代码的分离，基于 Planner 概念的 Agent 设计等。
+
+关于 Semantic 和 LangChain 的区别，我们后续会再详细介绍。
+:::
+
+## SK 中的五大概念
+LangChain 框架把整个编排的过程抽象出了 Chian 的概念，而为了更好的对 AI 能力进行编排，SK 抽象出了五大概念，因此从这个角度讲，了解 SK 的成本还是比 LangChain 要大一点的。但是，我认为，SK 从另外的视角给出了不同的看法，深入的了解不同框架的不同思想，对于我们后期的应用设计而言，也是有非常大的帮助的。因此，画一些时间来了解 SK 的相关概念，是一件非常值得的事情。
+
+| 概念 | 含义 |
+| --------- | --------- |
+| Kernel | Kernel 会把用户的问题编排为一个待解决的任务 |
+| Plugins | 我们定制的、可用于解决某类任务的提示词、外部工具都会以 Plugin 的形式注册到 Kernel 中，以供 Planner 调用|
+| Planner | Planner 会根据当前 Kernel 可用的资源对任务拆解为多个步骤，并且逐步执行 |
+| Memories | Memory 主要用户保存和大模型交互的历史信息 |
+| Connectors | 可以访问外部数据的工具称之为 Connector |
+
+: SK 中的五大概念 {#tbl-sk_5_concepts}
+
+:::{.callout-note title="SK SDK 的语言版本"}
+为了保持一致，对于 Semantic Kernl 的示例代码，我们会统一采用 Python 版本。当然，SK 目前也支持 [C# 和 Java](https://learn.microsoft.com/en-us/semantic-kernel/get-started/supported-languages)，您可以根据自己的需要来选择语言版本。
+
+对于 Python 版本，我们使用 `python -m pip install semantic-kernel` 来安装 SK SDK。
+:::
+
+## Kernel
+我们可以用 @lst-sk_init_kernel 所示的代码来初始化一个 `Kernl` 实例。是的，就是这么简单。
+
+```{#lst-sk_init_kernel .python code-line-numbers="true" lst-cap="初始化 Kernel 实例"}
+import semantic_kernel as sk
+kernel = sk.Kernel()
+```
+
+正如它的名字一样，`Kernel` 本身已经暗示着它在整个框架中的重要地位。我能脱口而出的另一个比较重要的 Kernl 就是 Linux Kernel 了。如 @fig-sk_kernel，与 Linxu Kernel 类似，SK 中的 `Kernl` 负责管理运行 AI 应用所需的资源，例如：所需要的大模型，服务，插件……
+
+![Kernl 在 AI 应用中的位置](./images/sk_kernel.png){#fig-sk_kernel}
+
+为了实现 AI 应用的运行，我们会在 `Kernel` 中做某些必要的配置，同时我们还将在 `Kernel` 中注册所有可能用到的 `Connector` 和 `Plugin`，`Kernel` 会根据我们的配置来控制构造提示词、调用大模型、返回应用结果……等各个环节。
+
+虽然这里提前讲到了很多其他概念，但是也不用过分担心，本章接下来的部分会一步一步的对 @fig-sk_kernel 中的名词进行解释，并最终给出一个可运行的示例。
+
+## Plugins
+在介绍 `Plugin` 之前，我们有必要先介绍 `Function` 的概念。在 SK 中，`Function`（`SKFunctionBase`） 指代了所有的能力，这真是一个非常巧妙的设计理念。
+
+例如，我们可以使用如下的提示词让大模型帮助我们生成藏头诗：
+
+```{#lst-sk_prompt_function_poem .bash code-line-numbers="true" lst-cap="藏头诗的提示词"}
+写一首包含 {topic} 的藏头诗
+```
+
+例如，利用文心大模型，我们可以使用 @lst-sk_prompt_function_poem 生成各种类型的藏头诗。
+
+![利用大模型生成藏头诗](./images/waizg.jpg){#fig-waizg}
+
+在 SK 中，该 @lst-sk_prompt_function_poem 就是一个 `AcrosticPoetryFunction`，是一种可以生成藏头诗的能力。仔细想想，确实如此，不同的提示词不就是不同的能力吗？
+
+在 @lst-sk_init_kernel 的基础上，我们为 `Kernel` 增加编写藏头诗的能力。
+
+```{#lst-sk_add_function_for_kernel .python include="./code/test_sk_acrosticpoetry.py" code-line-numbers="true" lst-cap="Prompt & Function"}
+```
+
+1. 构造提示词
+2. 初始化 `Kernel`
+3. 为 `Kernel` 选择大模型
+4. 根据提示词生成 `AcrosticPoetryFunction`
+
+无论是由提示词和大模型驱动的能力（Semantic Function），还是由类似 `def add(a:int, b:int) -> int` 这种原生函数（Native Function）[^1]驱动的能力，在 SK 中，统称为 `Function`。当然，为了能够让 Native Function 具备 `Function` 的作用，需要使用 `@sk_function` 装饰器为其增加函数功能相关的语义描述。
+
+* **Semantic Function**：使用自然语言来和用户交互，并将用户的请求以提示词的形式提交给大模型，并将大模型返回的自然语言形式的结果返回给用户。
+* **Native Function**：用 Python 编写的函数，用于处理 LLM 不擅长的事情，例如：数学运算、I/O 处理、访问 REST API、……
+
+:::{.callout-tip}
+我认为，`Function` 的这种抽象和设计真的非常经典。
+:::
+
+在 SK 中，`Plugin` 就是一系列 `Function` 的集合。可以利用 SK 暴漏出来的各种 API 为 `Kernel` 增加能力支持，而大模型可以根据 `Function` 的语义描述来选择合适的能力以解决用户的提问。
+
+### Planner
+`Planner` 的概念有点类似 @sec-lc_react 中介绍的基于 ReAct 模式的 LangChain Agent，但是和 LangChain Agent 的概念又不完全一致。
+
+`Planner` 可以接受用户请求并返回完成用户请求的步骤，`Planner` 通过 LLMs 来分析 `Kernel` 中注册的插件以及用户请求，然后根据任务目标把插件重新组合成一系列步骤，最终通过执行这一些列步骤的来完成用户请求。因此，`Planner` 更类似 @sec-agent_pae 中介绍的 PlanAndExecute 模式的 Agent。
+
+和 LangChain Agent 相比，`Planner` 的优势在于我们可以通过其拆解的步骤来评估大模型的能力，而不需要像 LangChain Agent 那样得等到运行结束才知道大模型是否解决的我们的请求。对于大模型调优以及稳定性而言，`Planner` 的方式会更胜一筹。
+
+SK 提供了如下的预定义的 `Planner`：
+
+* `SequentialPlanner`：创建具有多 `Function` 的计划，并通过这些 `Function` 的输入和输出链接起来。
+* `ActionPlanner`：创建具有单个 `Function` 的计划。
+* `StepwisePlanner`：逐步执行每一步，在执行下一步之前会观察当前步骤的执行结果，类似 ReAct 模式的 Agent。
+
+微软的官方文档 [Automatically orchestrate AI with planners](https://learn.microsoft.com/en-us/semantic-kernel/agents/planners/?tabs=python) 中不建议使用如上三种类型的，更推荐使用最新的 `Planner`：Handlebars calling stepwise 以及 Function calling stepwise。
+
+:::{.callout-note}
+从 Python 版本的代码看，Handlebars calling stepwise 以及 Function calling stepwise 这两种类型的 `Planner` 还未实现。
+:::
+
+我们可以使用 `Planner` 来解决 @lst-sk_planner_math_question 所示的问题。
+
+```{#lst-sk_planner_math_question .bash lst-cap="一个需要解决的数学问题"}
+If my investment of 2130.23 dollars increased by 23%, how much would I have after I spent $5 on a latte?
+```
+
+```{#lst-sk_planner_math_problem .python include="./code/test_sk_planner.py" code-line-numbers="true" lst-cap="使用 Planner 解决复杂的数学问题"}
+```
+
+1. 为 Kernel 增加数学计算能力
+2. 创建 SequentialPlanner 类型的 `Planner`
+3. 为任务生成拆解步骤和计划
+4. 逐步执行第 3 步生成的计划
+
+@lst-sk_planner_math_problem 会为 @lst-sk_planner_math_question 生成如下的计算步骤，并且会最终给出正确的结果：2615.1829。
+
+```{#lst-sk_planner_math_problem_step .xml code-line-numbers="true" lst-cap="SK 对复杂问题的拆解计划"}
+<plan>
+    <!-- Calculate the increased amount after the investment -->
+    <function.MathPlugin.Multiply input="2130.23" number2="1.23" setContextVariable="INCREASED_AMOUNT"/>
+    <!-- Calculate the remaining amount after spending on a latte -->
+    <function.MathPlugin.Subtract input="$INCREASED_AMOUNT" number2="5" appendToResult="RESULT__FINAL_AMOUNT"/>
+</plan>
+```
+
+## Memories
+很多时候，应用会和大模型进行多轮的交互以解决用户的问题，例如和日期相关的任务：
+* 今天是几号？
+* 今天有什么重要的事情发生吗？
+* 历史上的今天都有哪些重要的事情发生呢？
+
+对于这种场景，我们希望能够把历史对话结果作为背景信息一并提供给大模型，以便大模型能够给出更好的结果，这种提供历史信息的能力就称之为 `Memories`。在 SK 中，`Memories` 的概念和 LangChain 是一致的，并没有太多的区别。
+
+SK 提供了三种 `Memories` 方式：
+
+* **传统的 KV 键值对方式**：存储方式和搜索方式与环境变量一致，这意味着待搜索的 `Key` 与用户输入的文本之间必须存在严格匹配的关系。
+* **传统的本地存储方式**：当我们有大量的 KV 信息时，最好将其保存在磁盘上，此时就是本地存储的方式。
+* **语义检索方式**：采用 @sec-embedding_intro 中的 `embedding` 方式进行信息的存储和检索，和 @sec-LC_RAG_vector 中介绍的基于 LangChain 和 VectorDB 实现的 RAG 类似。
+
+## Connectors
+如 @fig-sk_application_process，在 SK 中，`Connectors` 是不同组件之间的桥梁，使得 SK 中的不同组件可以交换彼此的信息，因此，`Connectors` 有着非常重要的作用。`Connectors` 类似 Linux 中的 `pipe` 的概念，利用 `pipe`，我们可以把各种不同的命令组合起来，以实现更加强大的能力。
+
+`Connectors` 可以用于和外部系统交互——例如与 HuggingFace 模型交互，也可以用于和外部数据交互——例如与 SQLite 交互以使其作为 `Memories`。
+
+SK 提供了很多预定义的 `Connectors`，这些预定义的 `Connectors` 主要用于两大领域：大模型集成，外部数据集成，具体可以参考 [semantic_kernel/connectors](https://github.com/microsoft/semantic-kernel/tree/main/python/semantic_kernel/connectors) 的代码实现。
+
+[^1]: 原生函数主要指的是用对应的编程语言编写的函数，这里主要是用来区别于 SK 中的 `Function` 的抽象概念。

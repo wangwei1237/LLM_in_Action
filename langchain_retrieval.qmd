@@ -169,7 +169,7 @@ LangChain 在 `0.0.300` 版本之后才支持 `QianfanEmbeddingsEndpoint`，并�
 * 安装 `qianfan` 库：`pip install qianfan`。
 :::
 
-## Vector stores
+## Vector stores {#sec-LC_RAG_vector}
 为文档创建 embedding 之后，需要对其进行存储并实现对这些 embedding 的有效搜索，此时我们需要**向量数据库**的支持。LangChain 集成了 [50 多种不同的向量数据库](https://python.langchain.com/docs/integrations/vectorstores)，还提供了一个标准接口，允许我们轻松的在不同的向量存储之间进行切换。
 
 ![向量数据库检索的基本流程](./images/vector_stores.jpeg){#fig-vector_stores}
