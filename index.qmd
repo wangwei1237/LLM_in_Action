@@ -17,7 +17,7 @@ description-meta: |
 这本书整体会分为三大部分：
 
 * PART 1：基本概念篇，主要介绍大模型相关的基本概念
-* PART 2：相关工具篇，主要介绍大模型相关的工具，LangChain, Langflow, AutoGen……
+* PART 2：相关工具篇，主要介绍大模型相关的工具，LangChain, Semantic Kernel, Langflow, AutoGen……
 * PART 3：具体实践偏，主要介绍应用大模型的具体案例
 
 ## 版权声明
