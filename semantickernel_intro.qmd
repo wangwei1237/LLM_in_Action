@@ -4,7 +4,7 @@ filters:
 code-annotations: below
 ---
 
-# Sematic Kernel 简介 {#sec-SK}
+# Semantic Kernel 简介 {#sec-SK}
 
 和 @sec-LC_intro 中介绍的 LangChain 一样，Semantic Kernel 也是一种便于使用 LLM 开发应用的框架，如果特殊说明，当提到 SK 的时候，我们一般说的就是 Semantic Kernel 框架。使用 SK，我们可以更加轻松的将传统的编程语言和 LLM 技术结合在一起，并使用 SK 中提供的开箱即用的各种组件，更加便利的开发我们的 AI 原生应用。
 

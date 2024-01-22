@@ -1,3 +1,4 @@
+# !/usr/bin/env python3
 """
 @discribe: demo for the Ernie-Bot-4 Function Calling.
 @author: wangwei1237@gmail.com

@@ -41,7 +41,7 @@ book:
       - langchain_openai_assistant.qmd
       - langchain_agent_fc.qmd
       - langchain_agent_pae.qmd
-    - part: "Sematic Kernel"
+    - part: "Semantic Kernel"
       chapters:
       - semantickernel_intro.qmd
       - semantickernel_prompt.qmd

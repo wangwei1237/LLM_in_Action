@@ -24,7 +24,18 @@ LangChain 虽然是一个非常年轻的框架，但又是一个发展速度非�
 
 作为一个年轻而又活力的框架，LangChain 正在彻底改变工业和技术，改变我们与技术的每一次互动。
 
+2024 年 1 月 8 日，经过了 1 年多 的迭代，LangChain 发布了第一个稳定版本 0.1.0 版本，这个版本完全向后兼容，并且有 `python` 和 `javascript` 两个版本。稳定版本的发布，无疑为社区广大开发者注入了 LLM 开发的强进信息。0.1.0 版本的主要改动大致如下[^8]：
+
+* 架构上分为两大部分：
+  * 主要的概念抽象、接口、核心功能，也就是 [`langchain-core`](https://github.com/langchain-ai/langchain/tree/master/libs/core?ref=blog.langchain.dev) 部分，该部分的代码是稳定的，并且会保持着非常严格的版本控制策略。
+  * 第三方软件包，主要位于 [`langchain-community`](https://github.com/langchain-ai/langchain/tree/master/libs/community?ref=blog.langchain.dev) 和 [langchain-partners](https://github.com/langchain-ai/langchain/tree/master/libs/partners?ref=blog.langchain.dev) 部分，这种方式对于第三方的集成会更加友好。
+* 通过引入 `LangSmith` 增加 LangChain 的可观测性，这一点我认为是非常大的突破，这会更加便于我们使用 LangChain 开发 LLM 应用。
+* Stream 响应的支持。LLM 有时可能需要一段时间才能做出响应，通过 Stream 方式的响应，LangChain 可以向用户展示结果的生成过程，就像我们使用 `文心一言` 或者 `ChatGPT` 显示的那样。
+* Agent 架构的调整，Agent 的初始化方式以及调用方式都做了升级，在使用时大家要特别注意。
+
 :::{.callout-tip}
+
+iPlayground 也是基于 LangChain 而构建，具体界面可以参见 @fig-iplayground_ui。
 可以使用 @sec-lf_langflow 中介绍的 Langflow 来对 LangChain 进行可视化操作。
 :::
 
@@ -87,6 +98,22 @@ LangChain 提供了与 LLMs 交互的通用构件：
 * `prompt template`：提供字符串格式的提示词。
 * `chat prompt template`：提示聊天消息格式的提示词。
 
+::: {.panel-tabset group="lc_i_prompt_demo"}
+
+## 0.1.0 版本
+```{#lst-prompt_n .python lst-cap="PromptTemplte 示例"}
+from langchain_core.prompts import PromptTemplate
+
+prompt_template = PromptTemplate.from_template(
+    "请以轻松欢快的语气写一篇描写 {topic} 的文章，字数不超过 {count} 字。"
+)
+res = prompt_template.format(topic="北京的秋天", count="100")
+
+print(res)
+# 请以轻松欢快的语气写一篇描写 北京的秋天 的文章，字数不超过 100 字。
+```
+
+## 0.0.xxx 版本
 ```{#lst-prompt .python lst-cap="PromptTemplte 示例"}
 from langchain import PromptTemplate
 
@@ -98,7 +125,34 @@ res = prompt_template.format(topic="北京的秋天", count="100")
 print(res)
 # 请以轻松欢快的语气写一篇描写 北京的秋天 的文章，字数不超过 100 字。
 ```
+:::
 
+::: {.panel-tabset group="lc_i_chat_prompt_demo"}
+## 0.1.0 版本
+```{#lst-chat_prompt_n .python lst-cap="ChatPromptTemplte 示例"}
+from langchain_core.prompts.chat import ChatPromptTemplate
+
+template = ChatPromptTemplate.from_messages([
+    ("system", "你是一个能力非凡的人工智能机器人，你的名字是 {name}。"),
+    ("human", "你好！"),
+    ("ai", "你好~"),
+    ("human", "{user_input}"),
+])
+
+messages = template.format_messages(
+    name="小明",
+    user_input="你是谁？"
+)
+
+print(messages)
+# [SystemMessage(content='你是一个能力非凡的人工智能机器人，你的名字是 小明。', 
+#                additional_kwargs={}), 
+# HumanMessage(content='你好！', additional_kwargs={}, example=False), 
+# AIMessage(content='你好~', additional_kwargs={}, example=False), 
+# HumanMessage(content='你是谁？', additional_kwargs={}, example=False)]
+```
+
+## 0.0.xxx 版本
 ```{#lst-chat_prompt .python lst-cap="ChatPromptTemplte 示例"}
 from langchain.prompts import ChatPromptTemplate
 
@@ -121,6 +175,7 @@ print(messages)
 # AIMessage(content='你好~', additional_kwargs={}, example=False), 
 # HumanMessage(content='你是谁？', additional_kwargs={}, example=False)]
 ```
+:::
 
 ### LLMs {#sec-LLMs}
 LangChain 提供了两种模型的通用接口：
@@ -159,6 +214,29 @@ class BaseChatModel(BaseLanguageModel[BaseMessageChunk], ABC):
 
 接下来，我们将 `Prompt` 和 `LLM` 整合起来，实现和大语言模型交互。
 
+::: {.panel-tabset group="llm_example_demo"}
+
+## 0.1.0 版本
+```{#lst-llm_example_n .python lst-cap="LLM 模型示例"}
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import OpenAI
+
+prompt_template = PromptTemplate.from_template(
+    "请以轻松欢快的语气写一篇描写 {topic} 的文章，字数不超过 {count} 字。"
+)
+llm = OpenAI()
+
+prompt = prompt_template.format(topic="北京的秋天", count="100")
+res = llm.invoke(prompt)
+print(res)
+
+# 秋天来到了北京，一片金黄色的枫叶，漫山遍野。
+# 湖面上的微风，吹起柔和的秋意，空气中弥漫着淡淡的枫香。
+# 这时，每一个角落都洋溢着秋日的温馨，令人心旷神怡。
+# 古老的长城上披着红叶，熙熙攘攘的人群中，也多了几分热闹与欢畅，这就是北京的秋天
+```
+
+## 0.0.xxx 版本
 ```{#lst-llm_example .python lst-cap="LLM 模型示例"}
 from langchain import PromptTemplate
 from langchain.llms import OpenAI
@@ -177,6 +255,7 @@ print(res)
 # 这时，每一个角落都洋溢着秋日的温馨，令人心旷神怡。
 # 古老的长城上披着红叶，熙熙攘攘的人群中，也多了几分热闹与欢畅，这就是北京的秋天
 ```
+:::
 
 由于文心聊天模型对 `message` 角色和条数有限制[^5] [^6]，因此我们需要对 `提示词` 做一些修改。
 
@@ -238,7 +317,6 @@ export QIANFAN_SK="${ERNIE_CLIENT_SECRET}"
 ## ErnieBotChat
 ```{#lst-lc_intro_wx_qianfan .python include="./code/test_wx_qianfan.py" code-line-numbers="true" lst-cap="使用 ErnieBotChat 调用文心大模型"}
 ```
-
 :::
 
 ### Output Parsers
@@ -247,22 +325,23 @@ export QIANFAN_SK="${ERNIE_CLIENT_SECRET}"
 我们可以使用 `提示词工程` 来提示 LLMs 输出特定的格式，如 @lst-llm-prompt-parser 所示：
 
 ```{#lst-llm-prompt-parser .python lst-cap="使用提示词工程来格式化输出内容"}
-from langchain.chat_models import ErnieBotChat
-from langchain.prompts import ChatPromptTemplate
+from langchain_community.chat_models import QianfanChatEndpoint
+from langchain_core.prompts.chat import ChatPromptTemplate
 
 template = ChatPromptTemplate.from_messages([
     ("user", "你是一个能力非凡的人工智能机器人，你的名字是 {name}。"),
     ("assistant", "你好~"),
     ("user", "{user_input}"),
 ])
-chat = ErnieBotChat()
+
+chat = QianfanChatEndpoint(model="ERNIE-Bot-4")
 
 messages = template.format_messages(
     name="小明",
     user_input="请给出 10 个表示快乐的成语，并输出为 JSON 格式"
 )
 
-res = chat.predict_messages(messages)
+res = chat.invoke(input=messages)
 print(res)
 
 # content='```json\n[\n    "乐不可支",
@@ -277,8 +356,8 @@ print(res)
 但是，使用 LangChain 提供的 `Output Parsers` 能力，会更加的方便。
 
 ```{#lst-prompt-llm-parse .python lst-cap="使用 Output Parser 解析 LLM 结果"}
-from langchain.chat_models import ErnieBotChat
-from langchain.prompts import ChatPromptTemplate
+from langchain_community.chat_models import QianfanChatEndpoint
+from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain.output_parsers import CommaSeparatedListOutputParser
 
 template = ChatPromptTemplate.from_messages([
@@ -286,21 +365,29 @@ template = ChatPromptTemplate.from_messages([
     ("assistant", "你好~"),
     ("user", "{user_input}"),
 ])
-chat = ErnieBotChat()
+
+chat = QianfanChatEndpoint(model="ERNIE-Bot-4")
 
 messages = template.format_messages(
     name="小明",
-    user_input="请仅给5个表示快乐的成语并以 , 分隔，除了成语外不要输出任何其他内容"
+    user_input="请给出 10 个表示快乐的成语，并输出为 JSON 格式"
 )
 
-res = chat.predict_messages(messages)
+res = chat.invoke(input=messages)
 print(res)
-# content='欢呼雀跃，手舞足蹈，笑逐颜开，心花怒放，喜笑颜开' additional_kwargs={} example=False
+
+# content='```json\n[\n    "乐不可支",
+#                    \n    "喜从天降",
+#                    \n    "笑逐颜开",
+#                    \n    "手舞足蹈",
+#                     ......
+#                    \n    "弹冠相庆"\n]\n```' 
+# additional_kwargs={} example=False
 
 output_parser = CommaSeparatedListOutputParser()
 res =  output_parser.parse(res.content.replace('，', ', '))
 print(res)
-# ['欢呼雀跃', '手舞足蹈', '笑逐颜开', '心花怒放', '喜笑颜开']
+# ['乐不可支', '喜从天降', '笑逐颜开', '手舞足蹈', '弹冠相庆']
 ```
 
 :::{.callout-warning}
@@ -311,7 +398,7 @@ print(res)
 在 LangChain 中，要使用 文心 4.0 模型，可以在初始化 LLM 时设置 `model_name` 参数为 `ERNIE-Bot-4`。
 
 ```python
-llm = ErnieBotChat(model_name="ERNIE-Bot-4")
+llm = QianfanChatEndpoint(model="ERNIE-Bot-4")
 ```
 :::
 
@@ -325,26 +412,25 @@ llm = ErnieBotChat(model_name="ERNIE-Bot-4")
 利用 `Chain` 的概念，我们可以对 @lst-prompt-llm-parse 的代码进行重构，
 
 ```{#lst-chain_example .python lst-cap="使用 chain 与文心大模型进行交互"}
-from langchain.chat_models import ErnieBotChat
-from langchain.prompts import ChatPromptTemplate
+from langchain_community.chat_models import QianfanChatEndpoint
+from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain.output_parsers import CommaSeparatedListOutputParser
 from langchain.chains import LLMChain
 
 template = ChatPromptTemplate.from_messages([
-    ("user", "你是一个能力非凡的人工智能机器人，你的名字是 {name}。"),
-    ("assistant", "你好~"),
+    ("system", "你是一个能力非凡的人工智能机器人，你的名字是 {name}。"),
     ("user", "{user_input}"),
 ])
-chat = ErnieBotChat()
+chat = QianfanChatEndpoint(model="ERNIE-Bot-4")
 
 chain =  LLMChain(llm=chat, prompt=template, output_parser=CommaSeparatedListOutputParser())
 
-res =  chain.run(name="小明", user_input="请仅给5个表示快乐的成语并以 , 分隔，除了成语外不要输出任何其他内容")
+query = "请仅给5个表示快乐的成语并以 , 分隔，除了成语外不要输出任何其他内容"
+res =  chain.invoke(input={"name": "小明", "user_input": query})
 
 print(res)
 # ['以下是五个表示快乐的成语：\n\n1. 喜出望外\n2. 乐不可支\n3. 心花怒放\n4. 满心欢喜\n5. 手舞足蹈']
 ```
-
 
 ## LangChain 的学习资料
 
@@ -364,3 +450,4 @@ print(res)
 [^5]: [ERNIE-Bot-turbo](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/4lilb2lpf)
 [^6]: [百度智能云千帆大模型平台](https://cloud.baidu.com/product/wenxinworkshop)
 [^7]: [LangChain 估值](https://ecosystem.lafrenchtech.com/companies/langchain)
+[^8]: [LangChain v0.1.0](https://blog.langchain.dev/langchain-v0-1-0/)

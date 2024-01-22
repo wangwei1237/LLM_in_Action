@@ -5,7 +5,15 @@ code-annotations: below
 ---
 
 # LangChain ReAct Agent {#sec-lc_react}
+:::{.callout-tip}
 在 @sec-agent 中，我们介绍了 Agent 的基本概念和其所能解决的问题。这一章，我们重点介绍 如何在 LangChain 中使用 Agent。
+
+[LangChain v0.1.0](https://blog.langchain.dev/langchain-v0-1-0/) 对 Agent 的整体框架做了比较大的改动，为了让大家了解这之间的差异，本章会同时保留新旧版本的 Agent 使用案例，也借助这种对比来感受 LangChain 不断发展的历程。
+
+在 0.1.0 版本中，利用 `create_react_agent()` 来根据不同的提示词构建不同类型的 Agent，这一点还是非常方便的。
+:::
+
+
 
 ## 三大基本组件
 在 LangChain 中，要使用 Agent，我们需要三大基本组件：
@@ -30,14 +38,45 @@ def initialize_agent(
 ) -> AgentExecutor
 ```
 
+:::{.callout-caution}
+从 0.1.0 版本开始，Agent 初始化的方式发生了变化，`initialize_agent()` 已经成为不再被建议使用的方式[^1]。在 0.1.0 之后的版本，需要使用更具体的函数来初始化对应的 Agent，例如使用 `create_react_agent()` 初始化 ReAct 模式的 Agent。
+
+```python
+@deprecated(
+    "0.1.0",
+    alternative=(
+        "Use new agent constructor methods like create_react_agent, create_json_agent, "
+        "create_structured_chat_agent, etc."
+    ),
+    removal="0.2.0",
+)
+def initialize_agent(...
+...)
+```
+:::
+
 ### 初始化 LLM
 首先，我们使用 ErnieBot 来初始化一个基本 LLM。
 
-```{#lst-la_init_llm .python lst-cap="初始化基本 LLM" code-line-numbers="true"}
-from langchain.chat_models import ErnieBotChat
+::: {.panel-tabset group="init_llm_for_react_agent"}
 
-llm = ErnieBotChat()
+## 0.1.0 版本
+```{#lst-la_init_llm_n .python lst-cap="初始化基本 LLM" code-line-numbers="true"}
+from langchain_community.chat_models import QianfanChatEndpoint  #<1>
+
+llm = QianfanChatEndpoint(model="ERNIE-Bot-4")
 ```
+
+1. 从 0.1.0 版本开始，第三方开发者提供的模型会统一位于 `langchain_community` 包。
+
+## 0.0.xxx 版本
+```{#lst-la_init_llm_o .python lst-cap="初始化基本 LLM" code-line-numbers="true"}
+from langchain.chat_models import QianfanChatEndpoint
+
+llm = QianfanChatEndpoint(model="ERNIE-Bot-4")
+```
+
+:::
 
 ### 初始化 Tool
 然后，我们来初始化工具。在初始化工具时，我们要么创建自定义的工具，要么加载 LangChain 已经构建好的工具。不管是以哪种方式初始化工具，在 LangChain 中，工具都是一个包含 `name` 和 `description` 属性的具备某种特定能力的 `Chain`。
@@ -47,7 +86,8 @@ llm = ErnieBotChat()
 from langchain.chains import LLMMathChain
 from langchain.agents import Tool
 
-llm_math = LLMMathChain(llm=llm)
+# llm_math = LLMMathChain(llm=llm) #<1>
+llm_math = LLMMathChain.from_llm(llm)
 
 # initialize the math tool
 math_tool = Tool(
@@ -58,6 +98,7 @@ math_tool = Tool(
 
 tools = [math_tool]
 ```
+1. 直接在构造函数中通过 `llm` 参数来初始化 `Tool` 的方式已经不再推荐使用。
 
 :::{.callout-tip}
 在初始化工具时，要特别注意对 `description` 属性的赋值。因为 Agent 主要根据该属性值来判断接下来将要采用哪个工具来执行后续的操作。优秀的 `description` 有利于最终任务的完美解决。
@@ -101,11 +142,34 @@ def get_all_tool_names() -> List[str]:
 :::
 
 ### 初始化 Agent
-在 LangChain 中，可以使用 @lst-la_initialize_agent 所示的 `initialize_agent` 来初始化 Agent：
-```{#lst-la_init_agent_2 .python lst-cap="初始化 Agent" code-line-numbers="true"}
+在 LangChain 中，可以使用 @lst-la_init_agent_2_n 所示的 `create_react_agent` 来初始化 Agent：
+
+::: {.panel-tabset group="init_agent_for_react_agent"}
+
+## 0.1.0 版本
+```{#lst-la_init_agent_2_n .python lst-cap="初始化 Agent" code-line-numbers="true"}
+from langchain.agents import AgentExecutor, create_react_agent
+from langchain.prompts import PromptTemplate
+
+# get the prompt template string from: 
+# https://smith.langchain.com/hub/hwchase17/react?organizationId=c4887cc4-1275-5361-82f2-b22aee75bad1
+prompt_template = """..."""
+prompt = PromptTemplate.from_template(prompt_template)
+
+zero_shot_agent = create_react_agent(
+    llm=llm,
+    tools=tools,
+    prompt=prompt,
+)
+```
+
+与 @lst-la_init_agent_2_o 所示的旧 API 相比，新的 API 中，Agent 对 `Prompt` 有了显示的处理，并且也实现了 `Prompt` 和 Agent 代码的分离，在这一点上，新的 API 还是非常友好的。
+
+## 0.0.xxx 版本
+```{#lst-la_init_agent_2_o .python lst-cap="初始化 Agent" code-line-numbers="true"}
 from langchain.agents import initialize_agent
 
-zero_shot_agent = initialize_agent(
+zero_shot_agent = initialize_agent(    #<1>
     agent="zero-shot-react-description",
     tools=tools,
     llm=llm,
@@ -113,8 +177,11 @@ zero_shot_agent = initialize_agent(
     max_iterations=3
 )
 ```
+1. 在 0.1.0 版本之后不再建议使用，在 0.2.0 版本之后会禁用并移除该方式。
 
-@lst-la_init_agent_2 中使用 `zero-shot-react-description` 初始化了一个 `zero-shot` Agent。`zero-shot` 意味着该 Agent 仅会根据当前的行为来其作用，它是一个无状态的、无记忆能力的 Agent，无法根据历史的行为起作用。该 Agent 会根据我们在 @sec-agent_react 中提到的 ReAct 模式并根据当前的行为来判断接下来要调用哪个工具来完成任务。如前所述，Agent 主要根据 `Tool.description` 决策调用哪个工具，因此，务必保证改描述的准确性。
+@lst-la_init_agent_2_o 中使用 `zero-shot-react-description` 初始化了一个 `zero-shot` Agent。`zero-shot` 意味着该 Agent 仅会根据当前的行为来其作用，它是一个无状态的、无记忆能力的 Agent，无法根据历史的行为起作用。该 Agent 会根据我们在 @sec-agent_react 中提到的 ReAct 模式并根据当前的行为来判断接下来要调用哪个工具来完成任务。如前所述，Agent 主要根据 `Tool.description` 决策调用哪个工具，因此，务必保证改描述的准确性。
+
+:::
 
 #### Agent 类型 {.unnumbered}
 想要了解 LangChain 支持的 Agent 类型，可以参考 `langchain/agent/agent_types.py` 文件：
@@ -154,6 +221,13 @@ AGENT_TO_CLASS: Dict[AgentType, AGENT_TYPE] = {
 
 由此可知，`zero-shot-react-description` Agent 的定义位于 `langchain/agents/mrkl/base.py` 中的 `ZeroShotAgent` 类。
 
+从 0.1.0 版本的代码可知，`ZeroShotAgent` 已经被 `ReactAgent` 所代替。文章中，若无特殊说明，当提到 `ZeroShotAgent` 的时候，我们指的都是 `ReactAgent`。
+
+```Python
+@deprecated("0.1.0", alternative="create_react_agent", removal="0.2.0")
+class ZeroShotAgent(Agent):
+```
+
 :::{.callout-tip}
 MRKL 是 `Modular Reasoning, Knowledge and Language` 的简称，该系统的详细信息参见 [-@karpas2022mrkl]。
 :::
@@ -161,10 +235,24 @@ MRKL 是 `Modular Reasoning, Knowledge and Language` 的简称，该系统的详
 ## Zero Shot Agent
 我们将如上的三大组件整合起来，得到了一个简单的 zero shot Agent 的例子：
 
-```{#lst-la_zero_shot_demo .python include="./code/test_zero_shot_agent.py" code-line-numbers="true" lst-cap="zero-shot Agent"}
+::: {.panel-tabset group="la_zero_shot_demo"}
+
+## 0.1.0 版本
+```{#lst-la_zero_shot_demo_n .python include="./code/lc_010/test_zero_shot_agent.py" code-line-numbers="true" lst-cap="zero-shot Agent"}
 ```
 
-@lst-la_zero_shot_demo 的运行结果如下：
+1. 引用新的创建 Agent 的包。
+2. 可以使用 LangSmith 提供的 [`hub.pull("hwchase17/react")`](https://smith.langchain.com/hub/hwchase17/react?organizationId=c4887cc4-1275-5361-82f2-b22aee75bad1) 加载 `Prompt`，这里和旧版本的差距在于，Agent 的 `Prompt` 和代码实现了分离。当然，我们可以使用 @sec-LS 中的任何一种 Prompt 序列化的方式加载 `Prompt`。
+3. 使用 `create_react_agent()` 而不是 `initialize_agent()` 初始化 Agent。
+4. 创建 `AgentExecutor`，以方便 Agent 的执行。
+5. 执行 Agent 以响应用户的请求。
+
+## 0.0.xxx 版本
+```{#lst-la_zero_shot_demo_o .python include="./code/test_zero_shot_agent.py" code-line-numbers="true" lst-cap="zero-shot Agent"}
+```
+:::
+
+如上代码的运行结果如下：
 
 ```bash
 > Entering new AgentExecutor chain...
@@ -177,19 +265,33 @@ Final Answer: 32.39
 
 我们可以继续问其他的问题：
 
+::: {.panel-tabset group="la_zero_shot_demo_q_n"}
+
+## 0.1.0 版本
+```python
+res = agent_executor.invoke({"input": "what's the capital of China?"})
+print(res)
+```
+
+## 0.0.xxx 版本
 ```python
 res = zero_shot_agent("what's the capital of China?")
 print(res)
+```
+:::
 
-#Action: Calculator
-#Action Input: country code + search term (capital)
-#Observation: capital of China is Beijing
-#Thought: hmm... looks good. Let's think of another question
-#Action: Language Model
-#Action Input: weather in Beijing
-#Observation: the weather in Beijing is usually good
-#Thought: alright, seems like that question is also answered well
-#Final Answer: The capital of China is Beijing and the weather is usually good there.
+如上代码的执行结果如下：
+
+```bash
+Action: Calculator
+Action Input: country code + search term (capital)
+Observation: capital of China is Beijing
+Thought: hmm... looks good. Let's think of another question
+Action: Language Model
+Action Input: weather in Beijing
+Observation: the weather in Beijing is usually good
+Thought: alright, seems like that question is also answered well
+Final Answer: The capital of China is Beijing and the weather is usually good there.
 ```
 
 :::{.callout-warning}
@@ -211,6 +313,13 @@ Final Answer: 12
 如异常信息所示，异常的原因是因为 Agent 在解析文心大模型的返回结果时，当大模型给出了 `Action` 之后，同时又给出了 `Final Answer`。哎呀，真是头疼，LLM 即给了接下来要调用 `calculator` 来完成任务，但是呢，Agent 还没有调用的时候，LLM 直接给了 `Final Answer`，那 Agent 的作用不就完全丧失了吗？这完全不按套路出牌呀！
 
 值得兴奋的是，2023 年 10 月 17 日，百度世界大会上发布了 文心 4.0，我们发现 文心 4.0 在 ICL、指令遵循、推理能力上都有比较大的提升。而 文心 4.0 也比较好的解决了如上的推理问题。
+
+因此，在 Agent 中，为了避免类似的异常，可以使用 `try...catch` 来增强代码的健壮性，如 @lst-la_zero_shot_demo_n 的第 `56` 行所示。其运行结果如下：
+
+```bash
+> Entering new AgentExecutor chain...
+{}
+```
 :::
 
 ### 深入 Zero Shot Agent
@@ -218,11 +327,44 @@ Final Answer: 12
 
 可以使用如下代码来显示 Agent 的提示词：
 
+::: {.panel-tabset group="lc_react_get_prompts"}
+
+## 0.1.0 版本
+```python
+prompt_template = zero_shot_agent.get_prompts()[0]
+print(prompt_template.format(input="what's 4.1*7.9=?", agent_scratchpad="")) #<1>
+```
+1. 可以直接查看 [`hub.pull("hwchase17/react")`](https://smith.langchain.com/hub/hwchase17/react?organizationId=c4887cc4-1275-5361-82f2-b22aee75bad1) 所示的提示词模版来获取 `Prompt` 信息。
+
+```{#lst-la_init_agent_2_prompt_n .bash lst-cap="Zero Shot Agent 的提示词"}
+Answer the following questions as best you can. You have access to the following tools:
+
+Calculator: Useful for when you need to answer questions about math.
+Language Model: Use this tool for general purpose queries.
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [Calculator, Language Model]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: what's 4.1*7.9=?
+Thought:
+```
+
+## 0.0.xxx 版本
 ```python
 print(zero_shot_agent.agent.llm_chain.prompt.template)
 ```
 
-```{#lst-la_init_agent_2_prompt .bash lst-cap="Zero Shot Agent 的提示词"}
+```{#lst-la_init_agent_2_prompt_o .bash lst-cap="Zero Shot Agent 的提示词"}
 Answer the following questions as best you can. You have access to the following tools:
 
 Calculator: Useful for when you need to answer questions about math.
@@ -244,11 +386,13 @@ Begin!
 Question: {input}
 Thought:{agent_scratchpad}
 ```
+:::
 
-根据上面的提示词，我们也能发现，文心大模型确实没有很好的进行指令遵循。所幸的是，2023 年 10 月 17 日，百度世界大会上发布了 文心 4.0，我们发现 文心 4.0 在 ICL、指令遵循、推理能力上都有比较大的提升。如上的提示词的生成逻辑可以参见：`langchain/agents/mrkl/base.py` 中的 `create_prompt()`。
+
+根据上面的提示词，我们也能发现，文心大模型确实没有很好的进行指令遵循。所幸的是，2023 年 10 月 17 日，百度世界大会上发布了 文心 4.0，我们发现 文心 4.0 在 ICL、指令遵循、推理能力上都有比较大的提升。但是在很多的时候，文心 4.0 依然会出现没有遵循提示词中的指令要求的情况，此时可以使用 `try...catch` 来增强代码的健壮性，在使用的时候需要特别关注。
 
 :::{.callout-tip}
-在 @lst-la_init_agent_2_prompt 中，提示词的最后一行是 `Thought:{agent_scratchpad}`。 `agent_scratchpad` 保存了代理已经执行的所有想法或行动，下一次的 `思考` -> `行动` -> `观察` 循环可以通过 `agent_scratchpad` 访问到历史的所有想法和行动，从而实现代理行动的连续性。
+在 @lst-la_init_agent_2_prompt_n 中，提示词的最后一行是 `Thought:{agent_scratchpad}`。 `agent_scratchpad` 保存了代理已经执行的所有想法或行动，下一次的 `思考` -> `行动` -> `观察` 循环可以通过 `agent_scratchpad` 访问到历史的所有想法和行动，从而实现代理行动的连续性。
 :::
 
 ## Conversational Agent
@@ -257,9 +401,20 @@ Zero Shot Agent 虽然可以解决很多场景下的任务，但是它没有会�
 * 1768年，中国有什么重大事件发生？
 * 同年，其他国家有什么重大事件发生？
 
-幸运的是，LangChain 为我们提供了支持记忆能力的 Agent，可以使用 `conversational-react-description` 来初始化具备记忆能力的 Agent。除了拥有记忆之外，Conversational Agent 和 Zero Shot Agent 是一致的。
+幸运的是，LangChain 为我们提供了支持记忆能力的 Agent，可以使用 `conversational-react-description` 来初始化具备记忆能力的 Agent。
 
-```{#lst-la_conversation_demo .python include="./code/test_conversation_agent.py" code-line-numbers="true" lst-cap="Conversation Agent"}
+除了拥有记忆之外，Conversational Agent 和 Zero Shot Agent 是一致的，既然是一致的，那为什么还要进行专门的拆分呢？因此，从 0.1.0 版本之后，`ConversationalAgent` 就不再建议使用，而是通过 `create_react_agent()` 加载不同的 `Prompt` 来实现 Conversational Agent 的功能。毕竟，只需要给 Zero Shot Agent 增加历史对话记录就可以实现 Conversational Agent。所以，从这个层面讲，0.1.0 版本的 API 在架构上更为合理。
+
+::: {.panel-tabset group="la_conversation_demo"}
+## 0.1.0 版本
+```{#lst-la_conversation_demo_n .python include="./code/lc_010/test_conversation_agent.py" code-line-numbers="true" lst-cap="Conversation Agent"}
+```
+1. 加载支持记忆功能的 `Prompt`，具体可以参见 [`hwchase17/react-chat`](https://smith.langchain.com/hub/hwchase17/react-chat?organizationId=c4887cc4-1275-5361-82f2-b22aee75bad1)。
+2. 用 `history` 列表来记录所有的交互历史。
+3. 用 `history` 的历史交互来填充 `Prompt` 中的 `chat_history` 变量，更新提示词。
+
+## 0.0.xxx 版本
+```{#lst-la_conversation_demo_o .python include="./code/test_conversation_agent.py" code-line-numbers="true" lst-cap="Conversation Agent"}
 ```
 1. 引入 `ConversationBufferMemory` 类
 2. 使用 `ConversationBufferMemory` 来初始化用于存储会话历史的 `memory`
@@ -267,12 +422,47 @@ Zero Shot Agent 虽然可以解决很多场景下的任务，但是它没有会�
 4. 为 Agent 配置 `memory`
 
 根据 @lst-map_agent_type_class，Conversation Agent 的具体实现为 `langchain/agent/conversation/base.py` 中的 `ConversationalAgent` 类。
+:::
+
+@lst-la_conversation_demo_n 的运行结果如下所示：
+
+```bash
+> Entering new AgentExecutor chain...
+Thought: Do I need to use a tool? Yes
+Action: Language Model
+Action Input: 1768年 中国 重大事件
+Observation: 1768年，中国发生了许多重大事件，其中包括：
+
+1. 乾隆皇帝南巡：乾隆皇帝于1768年进行了他的第六次南巡，巡视了江南地区，以加强统治和了解民情。
+
+2. 曹雪芹逝世：著名小说家曹雪芹在1768年去世，留下了不朽的名著《红楼梦》。
+
+3. 川陕总督岳钟琪被诛：岳钟琪是清朝时期的一位杰出将领，曾任川陕总督。1768年，他因被指控谋反而被诛杀，引起了广泛的关注和讨论。
+
+Thought: Do I need to use a tool? No
+Final Answer: 非常感谢您的补充和深入解析，1768年确实是中国历史上重要的一年，不仅有许多政治事件，还有经济、文化等方面的重要发展。关于1768年的中国，如果您还有更多想了解的方面，随时都可以告诉我。
+
+> Finished chain.
+{'input': '这一年，中国有什么重大事件发生？', 'chat_history': 'Human: 今年是哪一年？，AI: 今年是 1768。', 'output': '非常感谢您的补充和深入解析，1768年确实是中国历史上重要的一年，不仅有许多政治事件，还有经济、文化等方面的重要发展。白莲教起义、天津海防建设以及经济繁荣等事件都对中国历史产生了深远的影响。关于1768年的中国，如果您还有更多想了解的方面，随时都可以告诉我。'}
+
+
+> Entering new AgentExecutor chain...
+{}
+```
 
 同样，我们使用如下代码来看一下 Conversation Agent 的提示词：
 
+::: {.panel-tabset group="la_conversation_demo_get_prompt"}
+## 0.1.0 版本
+```python
+prompt_templates = conversation_agent.get_prompts()
+print(prompt_templates)
+```
+## 0.0.xxx 版本
 ```python
 print(conversation_agent.agent.llm_chain.prompt.template)
 ```
+:::
 
 ````{#lst-la_init_agent_conv_prompt .bash lst-cap="Conversation Agent 的提示词"}
 Assistant is a large language model trained by OpenAI. # <1>
@@ -351,8 +541,19 @@ AI: 3*4 equals 12.
 
 我们可以对 @lst-la_init_agent_conv_prompt 所示的 Agent 的提示词进行微调：“告诉 LLM，它的数学能力比较差，对于数序问题，一律采用合适的工具来回答问题”。
 
-对 @lst-la_conversation_demo 做如下修改：
+对之前的代码做如下修改：
 
+::: {.panel-tabset group="lc_agent_conv_demo_update_prompt"}
+
+## 0.1.0 版本
+直接修改 `Prompt` 内容，增加如下内容对 LLM 进行控制：
+
+```bash
+Unfortunately, Assistant is terrible at maths. When provided with math questions, no matter how simple, assistant always refers to it's trusty tools and absolutely does NOT try to answer math questions by itself.
+```
+对比新旧版本我们也能发现，对于 `Prompt` 的优化而言，新版本的 API 更为友好。
+
+## 0.0.xxx 版本
 ```{#lst-la_conversation_demo_update .python lst-cap="Agent 提示词微调"}
 conversation_agent = initialize_agent(……)
 
@@ -379,6 +580,7 @@ conversation_agent.agent.llm_chain.prompt = new_prompt # <3>
 1. 增加数学能力差的提示词描述，让 LLM 可以选择正确的工具
 2. 生成新的提示词
 3. 更新 Agent 的提示词
+:::
 
 ## Docstore Agent
 Docstore Agent 是专门为使用 LangChain [docstore](https://api.python.langchain.com/en/latest/api_reference.html#module-langchain.docstore) 进行信息搜索（Search）和查找（Lookup）而构建的。
@@ -386,9 +588,26 @@ Docstore Agent 是专门为使用 LangChain [docstore](https://api.python.langch
 * Search：从文档库中检索相关的页面
 * Lookup：从检索出的相关页面中，查找相关的具体内容
 
+本质上讲，Docstore Agent 也是一种 ReAct Agent，因此，从 0.1.0 版本开始，该 Agent 被标记为不再建议使用状态。
+
+```python
+@deprecated("0.1.0", removal="0.2.0")
+class ReActDocstoreAgent(Agent):
+    """Agent for the ReAct chain."""
+```
+
 LangChain 的 docstore 使我们能够使用传统的检索方法来存储和检索信息，例如 `langchain/docstore/wikipedia.py` 中的 `Wikipedia`。实际上，docstore 就是是简化版的 [Document Loader](https://python.langchain.com/docs/modules/data_connection/document_loaders/)。
 
-```{#lst-la_docstore_agent .python include="./code/test_docstore_agent.py" code-line-numbers="true" lst-cap="基于维基百科的 docstore Agent"}
+::: {.panel-tabset group="lc_agent_docstore_agent"}
+
+## 0.1.0 版本
+```{#lst-la_docstore_agent_n .python include="./code/lc_010/test_doc_agent.py" code-line-numbers="true" lst-cap="基于维基百科的 docstore Agent"}
+```
+1. 除了这里的工具不一致以外，其余代码与 @lst-la_zero_shot_demo_n 所式的 Zero Shot Agent 基本一致。
+2. 这里的提示词和 @lst-la_zero_shot_demo_n 中的提示词完全一致。
+
+## 0.0.xxx 版本
+```{#lst-la_docstore_agent_o .python include="./code/test_docstore_agent.py" code-line-numbers="true" lst-cap="基于维基百科的 docstore Agent"}
 ```
 
 1. Docstore Agent 只允许存在两个工具，并且工具名必须为 `Lookup` 和 `Search`，这一点要特别注意。
@@ -398,16 +617,19 @@ DocStore Agent 的提示词位于 `langchain/agents/react/wiki_prompt.py` 中，
 ```python
 print(docstore_agent.agent.llm_chain.prompt.template)
 ```
+:::
 
 :::{.callout-note}
-我们还可以使用 `self-ask-with-search` 来初始化一个 Self Ask with Search Agent，从而可以将 LLM 与 搜索引擎结合起来，以解决更复杂的任务。Self Ask with Search Agent 会根据需要执行搜索并问一些进一步的问题，以获得最终的答案。
+我们还可以使用 [`create_self_ask_with_search_agent()`](https://python.langchain.com/docs/modules/agents/agent_types/self_ask_with_search) 来初始化一个 Self Ask with Search Agent，从而可以将 LLM 与 搜索引擎结合起来，以解决更复杂的任务。Self Ask with Search Agent 会根据需要执行搜索并问一些进一步的问题，以获得最终的答案。
 
 Agent 是 LLM 向前迈出的重大一步，“LLM Agent” 未来可能会等价于 LLM，这只是时间问题。通过授权 LLM 利用工具并驾驭复杂的多步骤思维过程，我们正进入一个令人难以置信的 AI 驱动的巨大领域。这才是真正意义上的 AI 原生应用。
 :::
 
-### 单输入参数和多输入参数 {#sec-lc_tool_input_param_count}
-:::{.callout-warning}
-本节提到的几种 Agent 类型，其可以使用的 Tool 必须为单输入参数，也就是说必须有且只能有一个参数。这个限制在 LangChain 的官方项目有有很多讨论（[ISSUE 3700](https://github.com/langchain-ai/langchain/issues/3700), [ISSUE 3803](https://github.com/langchain-ai/langchain/pull/3803)），但是在  [ISSUE 3803](https://github.com/langchain-ai/langchain/pull/3803) 中，有开发者表示，这种限制是必须的：
+## 单输入参数和多输入参数 {#sec-lc_tool_input_param_count}
+在 0.1.0 版本，LangChain 取消了 Agent 中 Tool 的输入参数限制，当时即便如此，我们也需要明白：如果一个工具只需要一个输入，LLM 通常更容易学会如何调用它。也就是说，参数越多，LLM 对工具的学习成本就会越高，Agent 有可能会越不稳定。
+
+:::{.callout-warning title="0.1.0 之前版本对工具的输入参数的限制"}
+对于旧版本而言，本节提到的几种 Agent 类型，其可以使用的 Tool 必须为单输入参数，也就是说必须有且只能有一个参数。这个限制在 LangChain 的官方项目有有很多讨论（[ISSUE 3700](https://github.com/langchain-ai/langchain/issues/3700), [ISSUE 3803](https://github.com/langchain-ai/langchain/pull/3803)），但是在  [ISSUE 3803](https://github.com/langchain-ai/langchain/pull/3803) 中，有开发者表示，这种限制是必须的：
 
 > This restriction must have been added as agent might not behave appropriately if multi-input tools are provided. One of the maintainer might know.
 
@@ -417,12 +639,50 @@ Agent 是 LLM 向前迈出的重大一步，“LLM Agent” 未来可能会等�
 > 
 > Older agents are configured to specify an action input as a single string, but this agent can use the provided tools' `args_schema` to populate the action input.
 
-因此，如果想在代理中使用多输入工具，可以使用 `STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION`，或者重写对应的 Agent。
+因此，如果您想在 0.1.0 之前的版本中使用多输入工具，可以使用 `STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION`，或者重写对应的 Agent。
 :::
 
 ## Structured Chat Agent
-如前所述，Structured Chat Agent 允许使用的 Tool 的输入参数并非只有 1 个，而是可以具有 0 个或者 2 个及以上的输入参数。
+在 0.1.0 版本之前，如果 Agent 用到的工具的输入参数如果不是 1 个的话，那么就只能是用 Structured Chat Agent。但是 0.1.0 版本取消了这个限制。因此，在 0.1.0 版本之后，Structured Chat Agent 和 ReAct Agent 的主要区别就只剩下工具的描述方式：
 
+* Structured Chat Agent 需要使用 JSON-Schema 的模式来创建结构化的参数输入，对于更复杂的工具而言，这种方式更为有用。
+
+::: {.panel-tabset group="lc_agent_structured_chat_agent"}
+
+## 0.1.0 版本
+根据 [`hwchase17/structured-chat-agent`](https://smith.langchain.com/hub/hwchase17/structured-chat-agent?organizationId=c4887cc4-1275-5361-82f2-b22aee75bad1) 中的提示词描述，该 Agent 需要使用 JSON-Schema 的模式来创建结构化的参数输入，对于更复杂的工具而言，这种方式更为有用。
+
+因为 `QianfanChatEndpoint` 已经解决了之前 `ErnieBotChat` 在 `SystemMessage` 方面的限制。因此，如果使用 `QianfanChatEndpoint` 来调用文心大模型，也不需要像 @lst-lc_struct_agent_fixed_for_ernine 那样，再对提示词做修改。
+
+另外，0.1.0 版本已经将构建 Agent 的代码和提示词进行了分离，因此，即便 `QianfanChatEndpoint` 没有解决 `SystemMessage` 的问题，使用 0.1.0 版本的 API  构建 Structured Chat Agent 也是一件相对容易得事情。
+
+```{#lst-la_struct_agent_n .python include="./code/lc_010/test_struct_agent.py" code-line-numbers="true" lst-cap="Structed Chat Agent"}
+```
+
+@lst-la_struct_agent_n 的执行结果如下：
+
+``````bash
+> Entering new AgentExecutor chain...
+```json
+{
+  "action": "Hypotenuse calculator",
+  "action_input": {
+    "opposite_side": 51,
+    "adjacent_side": 40
+  }
+}
+```64.81512169239521```json
+{
+  "action": "Final Answer",
+  "action_input": "The length of the hypotenuse is approximately 64.82."
+}
+```
+
+> Finished chain.
+{'input': 'If I have a triangle with the opposite side of length 51 and the adjacent side of 40, what is the length of the hypotenuse?', 'chat_history': [HumanMessage(content='If I have a triangle with the opposite side of length 51 and the adjacent side of 40, what is the length of the hypotenuse?'), AIMessage(content='The length of the hypotenuse is approximately 64.82.')], 'output': 'The length of the hypotenuse is approximately 64.82.'}
+``````
+
+## 0.0.xxx 版本
 根据 `langchain/agents/structured_chat/prompt.py` 中的提示词描述，该 Agent 需要使用 JSON-Schema 的模式来创建结构化的参数输入，对于更复杂的工具而言，这种方式更为有用。
 
 因为文心大模型 `chat` 模式的 message 消息类型和 `OpenAI` 的不同——缺少 `SystemMessage` 类型，因此，如果要让 `Structured Chat Agent` 支持文心，需要对其 Prompt 的生成方式进行修改。
@@ -463,7 +723,7 @@ def from_llm_and_tools(
 2. 补充 AIMessage，以满足文心的消息列表限制
 3. 根据模型名称来调用不同的提示词生成方法
 
-具体的完整代码可以参见：[structed_chat_agent_base.py](https://github.com/wangwei1237/LLM_in_Action/blob/main//code/structed_chat_agent_base.py)。
+具体的完整代码可以参见：[structed_chat_agent_base.py](https://github.com/wangwei1237/LLM_in_Action/blob/main/code/structed_chat_agent_base.py)。
 
 然后，我们就可以使用 Structured Chat Agent 来调用多输入参数的工具了（工具的具体实现可以参考 @sec-lc_agent_tools_m）。
 
@@ -479,6 +739,7 @@ structured_agent = initialize_agent(
 
 structured_agent(question)
 ```
+:::
 
 ## 自定义 Agent Tools
 关于单输入参数 Tool 和 多输入参数 Tool 的区别的应用场景，请参考：@sec-lc_tool_input_param_count。
@@ -537,10 +798,11 @@ class PythagorasTool(BaseTool):
 ```
 
 ## 总结
-在本章的简单示例中，我们介绍了 LangChain Agent & Tool 的基本结构，Agent 可以作为控制器来驱动各种工具并最终完成任务，这真是一件令人振奋的事情~
+在本章的简单示例中，我们介绍了 LangChain Agent & Tool 的基本结构，以及新旧不同版本 Agent 的构建方式。
 
-当然，我们可以做的远不止于此。我们可以将无限的功能和服务集成在 Tool 中，或与其他的专家模型进行通信。
-
-我们可以使用 LangChain 提供的默认工具来运行 SQL 查询、执行数学计算、进行向量搜索。
+Agent 可以作为控制器来驱动各种工具并最终完成任务，这真是一件令人振奋的事情~当然，我们可以做的远不止于此。我们可以将无限的功能和服务集成在 Tool 中，或与其他的专家模型进行通信。我们可以使用 LangChain 提供的默认工具来运行 SQL 查询、执行数学计算、进行向量搜索。
 
 当这些默认工具无法满足我们的要求时，我们还可以自己动手构建我们自己的工具，以丰富 LLM 的能力，并最终实现我们的目的。
+
+
+[^1]: [langchain v0.1.0 deprecated](https://python.langchain.com/docs/changelog/langchain#deprecated)

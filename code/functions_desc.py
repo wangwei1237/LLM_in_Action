@@ -1,3 +1,8 @@
+"""
+@discribe: functions description.
+@author: wangwei1237@gmail.com
+"""
+
 functions = [
     {
         "name": "get_current_news",
