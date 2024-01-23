@@ -29,7 +29,7 @@ LangChain 虽然是一个非常年轻的框架，但又是一个发展速度非�
 * 架构上分为两大部分：
   * 主要的概念抽象、接口、核心功能，也就是 [`langchain-core`](https://github.com/langchain-ai/langchain/tree/master/libs/core?ref=blog.langchain.dev) 部分，该部分的代码是稳定的，并且会保持着非常严格的版本控制策略。
   * 第三方软件包，主要位于 [`langchain-community`](https://github.com/langchain-ai/langchain/tree/master/libs/community?ref=blog.langchain.dev) 和 [langchain-partners](https://github.com/langchain-ai/langchain/tree/master/libs/partners?ref=blog.langchain.dev) 部分，这种方式对于第三方的集成会更加友好。
-* 通过引入 `LangSmith` 增加 LangChain 的可观测性，这一点我认为是非常大的突破，这会更加便于我们使用 LangChain 开发 LLM 应用。
+* 通过引入 `LangSmith`（@sec-LS_intro） 增加 LangChain 的可观测性，这一点我认为是非常大的突破，这会更加便于我们使用 LangChain 开发 LLM 应用。
 * Stream 响应的支持。LLM 有时可能需要一段时间才能做出响应，通过 Stream 方式的响应，LangChain 可以向用户展示结果的生成过程，就像我们使用 `文心一言` 或者 `ChatGPT` 显示的那样。
 * Agent 架构的调整，Agent 的初始化方式以及调用方式都做了升级，在使用时大家要特别注意。
 
@@ -307,6 +307,24 @@ export ERNIE_CLIENT_SECRET="……"
 export QIANFAN_AK="${ERNIE_CLIENT_ID}"
 export QIANFAN_SK="${ERNIE_CLIENT_SECRET}"
 ```
+
+:::{.callout-caution}
+`langchain-core` 0.1.13 版本对于 `chunk meta` 做了特殊处理，因此在该版本下使用 `QianfanChatEndpoint` 会导致异常。
+
+```bash
+> Entering new AgentExecutor chain...
+Additional kwargs key created already exists in left dict and value has unsupported type <class 'int'>.
+{}
+```
+
+![langchain-core 0.1.13 版本下千帆异常](./images/langchain_core_0113_qianfan_error.png){#fig-qianfan_error}
+
+如果遇到这种情况，可以对 `langchain-core` 降级到 0.1.12 版本来解决该问题。
+```bash
+pip install -U "langchain-core==0.1.12"
+```
+
+:::
 
 ::: {.panel-tabset group="ernie_and_qianfan"}
 ## QianfanChatEndpoint
