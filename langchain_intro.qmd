@@ -34,8 +34,6 @@ LangChain 虽然是一个非常年轻的框架，但又是一个发展速度非�
 * Agent 架构的调整，Agent 的初始化方式以及调用方式都做了升级，在使用时大家要特别注意。
 
 :::{.callout-tip}
-
-iPlayground 也是基于 LangChain 而构建，具体界面可以参见 @fig-iplayground_ui。
 可以使用 @sec-lf_langflow 中介绍的 Langflow 来对 LangChain 进行可视化操作。
 :::
 
