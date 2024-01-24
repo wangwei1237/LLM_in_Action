@@ -86,6 +86,10 @@ Tokenization 会影响 LLM 需要处理的数据量和计算次数。LLM 需要�
 * 对于百度的 ERNIE-Bot-turbo 模型而言，每 1000 个输入 token 的费用为 0.008￥，每 1000 个输出 token 的费用为 0.008￥。
 * 对于百度的 ERNIE-Bot 4.0 模型而言，每 1000 个输入 token 的费用为 0.12￥，每 1000 个输出 token 的费用为 0.12￥。
 
+尤其是对于 LLM Agent，我们更需要特别关注其 Token 的使用量。对于 @lst-la_struct_agent_n 所示的 Agent，即便其只包含 @lst-lc_agent_tools_si 和 @lst-lc_agent_tools_mi 2 个工具，即便我们向 Agent 提问的输入 Token 看起来不多，但是实际上却可能产生非常多的输入 Token。
+
+![Agent 与 LLM 多次交互以及其复杂的提示词模版带来的 Token 暴增](./images/agent_tokens_demo.jpg){#fig-agent_tokens_demo}
+
 [^1]: 在分词领域有时也被称为凝固度、内聚度，可以反映一个词内部的两个部分结合的紧密程度。
 
 [^2]: OOV（Out-of-Vocabulary）：词粒度分词模型只能使用词表中的词来进行处理，无法处理词表之外的词汇，这就是所谓的 OOV 问题。
