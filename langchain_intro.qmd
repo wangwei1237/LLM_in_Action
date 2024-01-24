@@ -309,7 +309,7 @@ export QIANFAN_SK="${ERNIE_CLIENT_SECRET}"
 ```
 
 :::{.callout-caution}
-`langchain-core` 0.1.13 版本对于 `chunk meta` 做了特殊处理，因此在该版本下使用 `QianfanChatEndpoint` 会导致异常。
+`langchain-core` 0.1.13 版本对于 `chunk meta` 做了特殊处理，因此在该版本下使用 `QianfanChatEndpoint` 会导致异常。目前，社区也已经有相关 [PR](https://github.com/langchain-ai/langchain/pull/16464) 在解决该问题，我们静待花开。
 
 ```bash
 > Entering new AgentExecutor chain...
