@@ -27,8 +27,7 @@ def create_prompt_for_ernie(
 ```
 
 ## ChatConversationAgent
-参照 @lst-map_agent_type_class 和 @lst-la_conversation_demo，我们可以构建一个 `chat-conversational-react-description`。
-
+参照 @lst-map_agent_type_class 和 @lst-la_conversation_demo_n，我们可以构建一个 `chat-conversational-react-description`。
 ```{#lst-la_chat_conversation_demo .python include="./code/test_chat_coversation_agent.py" code-line-numbers="true" lst-cap="Chat Conversation Agent"}
 ```
 

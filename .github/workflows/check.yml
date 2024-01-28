@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
+        with:
+        version: 1.3.450
       - name: Checkout main source
         uses: actions/checkout@v4
       - name: Install Quarto Extensions
