@@ -5,17 +5,22 @@
 """
 
 import json
+import uuid
 
 from langchain.chains import LLMChain
 from langchain.chains.ernie_functions import (
     create_ernie_fn_chain,
 )
-from langchain.chat_models import ErnieBotChat
-from langchain.prompts.chat import (
+from langchain_community.chat_models import QianfanChatEndpoint
+from langchain_core.prompts.chat import (
     ChatPromptTemplate,
 )
 
 from utils.call_function import call_function
+
+run_id = str(uuid.uuid4())
+print(run_id)
+
 
 def get_current_news(location: str) -> str:
     """Get the current news based on the location.'
@@ -56,7 +61,8 @@ def get_current_weather(location: str, unit: str="celsius") -> str:
     }
     return json.dumps(weather_info)
 
-llm = ErnieBotChat(model_name="ERNIE-Bot-4")
+
+llm = QianfanChatEndpoint(model="ERNIE-Bot-4")
 
 prompt = ChatPromptTemplate.from_messages(
     [
@@ -64,16 +70,19 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 chain = create_ernie_fn_chain([get_current_weather, get_current_news], llm, prompt, verbose=True)
-res = chain.run("北京今天的新闻是什么？")
+res = chain.invoke({"query": "北京今天的新闻是什么？"}, config={"metadata": {"run_id": run_id}})
+print(res)
+res = res["function"]
 
 if res:
     res_cf = call_function([get_current_news, get_current_weather], res)
+    print(res_cf)
     prompt_2 = ChatPromptTemplate.from_messages(
         [
             ("human", "从 {function} 中，我们得到如下信息：{function_res}，那么 {query}"),
         ]
     )
     chain_2 = LLMChain(llm=llm, prompt=prompt_2, verbose=True)
-    res_2 = chain_2.run(function=res["name"], function_res=res_cf, query="北京今天的新闻是什么？")
+    res_2 = chain_2.invoke({"function": res["name"], "function_res": res_cf, "query": "北京今天的新闻是什么？"}, config={"metadata": {"run_id": run_id}})
     print(res_2)
 

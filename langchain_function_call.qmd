@@ -446,8 +446,10 @@ print(res)
 ## QianfanChatEndpoint
 
 ```{#lst-fc_multi_fcs_qianfan .python code-line-numbers="true" lst-cap="使用 QianfanChatEndpoint 执行文心大模型的函数调用"}
-from langchain.chat_models import QianfanChatEndpoint
-from langchain.prompts import ChatPromptTemplate
+ffrom langchain_community.chat_models import QianfanChatEndpoint
+from langchain_core.prompts.chat import (
+    ChatPromptTemplate,
+)
 from langchain.chains.ernie_functions import (
     create_ernie_fn_chain,
 )
@@ -484,6 +486,8 @@ Human: 北京今天新闻是什么？
 ```{#lst-la_wx_fc_run .python include="./code/langchain/utils/call_function.py" code-line-numbers="true" lst-cap="utils.call_function.call_function()"}
 ```
 
+1. 方便 LangSmith 可以追踪到函数调用，方便 DEBUG。
+
 通过文心大模型的函数调用解决我们的问题的完整代码如 @lst-la_wx_fc_demo_all 所示。
 
 ```{#lst-la_wx_fc_demo_all .python include="./code/test_ernie_fc.py" code-line-numbers="true" lst-cap="文心大模型利用函数调用解决问题"}
@@ -507,7 +511,9 @@ Human: 从 get_current_news 中，我们得到如下信息：{"location": "\u531
 根据提供的信息，`get_current_news` 返回的数据中，"北京"的新闻有两条，分别是 "I have a Book." 和 "It's a nice day, today."。所以，北京今天的新闻包括这两条信息。
 ```
 
+整个函数调用的的整个过程如 @fig-fc_ls 所示。
 
+![函数调用的 Trace 图](./images/fc_ls.png){#fig-fc_ls}
 
 ## 参考文献
 [^1]: [Function calling and other API updates](https://openai.com/blog/function-calling-and-other-api-updates)

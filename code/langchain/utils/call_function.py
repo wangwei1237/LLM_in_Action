@@ -18,6 +18,9 @@ from langchain.chains.ernie_functions import (
 )
 from langchain.pydantic_v1 import BaseModel
 
+from langsmith.run_helpers import traceable
+
+@traceable(run_type="tool")  #<1>
 def call_function(functions: Sequence[Union[Dict[str, Any], Type[BaseModel], Callable]],
                   fc_by_llm: dict) -> str:
     """Calling the function and return the result."""
